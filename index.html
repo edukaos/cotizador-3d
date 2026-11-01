@@ -1,0 +1,1625 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Calculadora de costos de impresión 3D con lista de precios, pedidos y presupuestos. Quirón 3D.">
+<title>Cotizador 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F4F6;--card:#FFFFFF;--line:#E2E4E9;--field:#FAFAFB;--fieldline:#CDD1D8;
+  --ink:#15171C;--ink2:#3A3F4A;--muted:#5B616E;--accent:#EA580C;--accentInk:#9A3412;--danger:#C81E1E;--ok:#15803D;
+  --panel:#15171C;--panelInk:#F3F4F6;--panelMuted:#B7BCC6;--panelLine:#2E323B;--bar:#2A2E36;--viewer:#EEF0F3;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1115;--card:#171A20;--line:#2A2E36;--field:#1D2027;--fieldline:#3A3F4A;
+  --ink:#ECEEF2;--ink2:#C9CDD5;--muted:#9AA0AC;--accentInk:#FDBA74;--danger:#F87171;--ok:#4ADE80;
+  --panel:#1F232B;--panelLine:#343944;--bar:#323742;--viewer:#12151A;
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1115;--card:#171A20;--line:#2A2E36;--field:#1D2027;--fieldline:#3A3F4A;
+  --ink:#ECEEF2;--ink2:#C9CDD5;--muted:#9AA0AC;--accentInk:#FDBA74;--danger:#F87171;--ok:#4ADE80;
+  --panel:#1F232B;--panelLine:#343944;--bar:#323742;--viewer:#12151A;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'IBM Plex Sans',system-ui,sans-serif}
+a{color:var(--accentInk)}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 16px 64px;display:flex;flex-direction:column;gap:24px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accentInk)}
+h1{margin:4px 0 0;font-size:clamp(26px,4vw,34px);line-height:1.1;font-weight:700;letter-spacing:-.02em}
+.hright{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.alert{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--accentInk);max-width:420px}
+.dot{width:8px;height:8px;border-radius:50%;background:#D97706;flex:none}
+.cols{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.left{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.card{margin:0;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--card);display:flex;flex-direction:column;gap:14px;min-width:0}
+.card h2,.card h3{margin:0;font-size:15px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(170px,100%),1fr));gap:14px}
+.f{display:flex;flex-direction:column;gap:6px;min-width:0}
+.f label,.lbl{font-size:13px;font-weight:500;color:var(--ink2)}
+.f.wide{grid-column:span 2}
+@media (max-width:420px){.f.wide{grid-column:auto}}
+.box{display:flex;align-items:center;border:1px solid var(--fieldline);border-radius:8px;background:var(--field);overflow:hidden;min-width:0}
+.box:focus-within,.sel:focus-visible,.ta:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.box input{flex:1 1 auto;min-width:0;width:100%;height:44px;padding:0 12px;border:0;background:transparent;color:var(--ink);font:15px 'IBM Plex Mono',monospace;outline:none}
+.box input[type=text]{font-family:'IBM Plex Sans',sans-serif}
+.box input::placeholder{color:var(--muted);opacity:.8}
+.box span{padding:0 12px;font:12px 'IBM Plex Mono',monospace;color:var(--muted);white-space:nowrap}
+.sel{height:44px;padding:0 10px;border:1px solid var(--fieldline);border-radius:8px;background:var(--field);color:var(--ink);font:15px 'IBM Plex Sans',sans-serif;width:100%;min-width:0}
+.ta{min-height:72px;padding:10px 12px;border:1px solid var(--fieldline);border-radius:8px;background:var(--field);color:var(--ink);font:15px 'IBM Plex Sans',sans-serif;resize:vertical;width:100%}
+input[type=number]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.hint{margin:0;font-size:13px;color:var(--muted)}
+.warn{margin:0;font-size:13px;color:var(--accentInk)}
+.err{margin:0;font-size:13px;color:var(--danger)}
+.btn{height:44px;padding:0 14px;border:1px solid var(--fieldline);border-radius:8px;background:var(--card);color:var(--ink);font:500 14px 'IBM Plex Sans',sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--ink2)}
+.btn.sm{height:36px;padding:0 12px;font-size:13px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#15171C;font-weight:700}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.linkbtn{padding:0;border:0;background:none;color:var(--accentInk);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
+.ib{width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:var(--ink2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ib:hover{background:var(--field)}.ib.del{color:var(--accentInk)}
+.ib.armed{background:var(--danger);color:#fff}
+button:focus-visible,a:focus-visible,input[type=checkbox]:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* files */
+.drop{display:flex;align-items:center;gap:14px;padding:16px;border:1.5px dashed var(--fieldline);border-radius:10px;background:var(--field);cursor:pointer;color:var(--ink2)}
+.drop:hover,.drop.over{border-color:var(--accent)}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.drop svg{flex:none;color:var(--accentInk)}
+.drop strong{display:block;color:var(--ink)}
+.slice{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--field);border:1px solid var(--line);font-size:14px}
+.slice svg{color:var(--ok);flex:none}
+.stl{display:flex;flex-wrap:wrap;gap:16px}
+.viewer{flex:1 1 260px;min-width:0;height:240px;border-radius:10px;background:var(--viewer);position:relative;overflow:hidden;touch-action:none;cursor:grab}
+.viewer canvas{display:block;width:100%;height:100%}
+.viewer .vh{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);pointer-events:none}
+.vbtn{position:absolute;top:8px;right:8px;z-index:1}
+.stlinfo{flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin:0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mini .box input{height:40px;font-size:14px;padding:0 8px}
+.est{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-radius:8px;background:var(--field);border:1px solid var(--line)}
+.est b{font-size:18px}
+.chips{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:8px;padding:4px;border:1px solid var(--line);border-radius:8px;background:var(--field);font-size:13px;max-width:100%}
+.chip img{width:36px;height:36px;object-fit:cover;border-radius:5px;flex:none}
+.chip .ic{width:36px;height:36px;border-radius:5px;background:var(--card);display:flex;align-items:center;justify-content:center;font:600 10px 'IBM Plex Mono',monospace;color:var(--accentInk);flex:none}
+.chip .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+.chip button{width:32px;height:32px;border:0;background:none;color:var(--muted);cursor:pointer;border-radius:6px;flex:none;font-size:14px}
+.chip button:hover{background:var(--card)}
+/* result */
+aside{flex:1 1 340px;min-width:0;display:flex;flex-direction:column;gap:16px}
+@media (min-width:960px){aside{position:sticky;top:16px}}
+.res{padding:24px;border-radius:12px;background:var(--panel);color:var(--panelInk);display:flex;flex-direction:column;gap:16px}
+.res h2{margin:0;font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--panelMuted)}
+.pv{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;border-radius:10px;background:#EEF0F3}
+.pvwrap{position:relative}
+.pvwrap .src{position:absolute;left:8px;bottom:8px;padding:2px 8px;border-radius:6px;background:rgba(21,23,28,.75);color:#fff;font-size:11px}
+.big{font-size:40px;font-weight:600;line-height:1.1;color:#fff}
+.pm{color:var(--panelMuted);font-size:14px}
+.brk{display:flex;flex-direction:column;gap:10px}
+.line{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.line .l{color:#D5D8DE}
+.bar{height:4px;border-radius:2px;background:var(--bar);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:4px;background:#F97316;border-radius:2px}
+.tot{display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px solid var(--panelLine)}
+.cta{min-height:48px;padding:0 18px;border:0;border-radius:8px;background:var(--accent);color:#15171C;font:inherit;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.cta:disabled{opacity:.6;cursor:progress}
+.cta2{min-height:44px;padding:0 16px;border:1px solid #4A505C;border-radius:8px;background:transparent;color:#F3F4F6;font:inherit;font-weight:600;cursor:pointer}
+.cta2:hover{border-color:#B7BCC6}
+.res .editing{margin:0;font-size:13px;color:var(--panelMuted)}
+.res .linkbtn{color:#FDBA74}
+.res details{font-size:13px;color:var(--panelMuted)}
+.res summary{cursor:pointer;color:#D5D8DE}
+.res details div{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.toast{min-height:20px;font-size:13px;color:#FDBA74}
+.mwarn{font-size:13px;color:#FDBA74;margin:0}
+.th{width:48px;height:36px;border-radius:6px;object-fit:cover;background:#EEF0F3;flex:none}
+.th.sm{width:36px;height:27px;border-radius:4px}
+.pn{display:flex;gap:10px;align-items:flex-start}
+/* mobile bar */
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:none;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--panel);color:#fff;box-shadow:0 -4px 16px rgba(0,0,0,.18)}
+.mbar .p{font:600 22px 'IBM Plex Mono',monospace}
+.mbar .s{font-size:12px;color:var(--panelMuted)}
+@media (max-width:959px){.mbar.show{display:flex}body{padding-bottom:76px}}
+/* lists */
+.list{padding:24px;border:1px solid var(--line);border-radius:12px;background:var(--card);display:flex;flex-direction:column;gap:16px;min-width:0}
+.lh{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.lh h2{margin:0;font-size:22px;letter-spacing:-.01em}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.search{height:44px;width:220px;max-width:100%;padding:0 12px;border:1px solid var(--fieldline);border-radius:8px;background:var(--field);color:var(--ink);font:14px 'IBM Plex Sans',sans-serif}
+.search:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.empty{padding:28px 16px;border:1px dashed var(--fieldline);border-radius:10px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;position:relative}
+table{width:100%;border-collapse:collapse;font-size:14px}
+.plist{min-width:860px}
+th{padding:12px 14px;font-weight:600;text-align:left;background:var(--field);color:var(--ink2);white-space:nowrap}
+td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:top}
+.r{text-align:right}
+.up{color:var(--danger)}.down{color:var(--ok)}
+.chk{width:20px;height:20px;accent-color:var(--accent);cursor:pointer;margin:2px 0 0}
+.att{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.att a{display:inline-flex;align-items:center;gap:6px;padding:2px 8px 2px 2px;border:1px solid var(--line);border-radius:6px;font-size:12px;text-decoration:none;color:var(--ink2);max-width:220px}
+.att a span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att a:hover{border-color:var(--accent)}
+.att img{width:28px;height:28px;object-fit:cover;border-radius:4px}
+.att .tag{width:28px;height:28px;border-radius:4px;background:var(--field);display:inline-flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;color:var(--accentInk)}
+.seg{display:flex;border:1px solid var(--fieldline);border-radius:8px;overflow:hidden}
+.seg button{height:44px;padding:0 14px;border:0;background:var(--card);color:var(--ink2);font:500 14px 'IBM Plex Sans',sans-serif;cursor:pointer}
+.seg button+button{border-left:1px solid var(--fieldline)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px}
+.stat{padding:14px 16px;border-radius:10px;background:var(--field);border:1px solid var(--line)}
+.stat .v{font:600 22px 'IBM Plex Mono',monospace;margin-top:2px}
+.stat .v.alert{color:var(--danger)}
+.stat .v.good{color:var(--ok)}
+/* order form */
+.oform{border:1.5px solid var(--accent)}
+.oform h3{font-size:18px}
+.oitems{min-width:560px}
+.oitems td,.oitems th{padding:8px 10px}
+.qty{width:72px;height:40px;padding:0 8px;border:1px solid var(--fieldline);border-radius:6px;background:var(--field);color:var(--ink);font:14px 'IBM Plex Mono',monospace;text-align:right}
+.disc{font-size:12px;color:var(--ok);white-space:nowrap}
+.sugg{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:10px;background:var(--field);border:1px solid var(--line);font-size:14px}
+.pays{display:flex;flex-direction:column;gap:8px}
+.payrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.5fr) 44px;gap:8px;align-items:center}
+@media (max-width:520px){.payrow{grid-template-columns:1fr 1fr 44px}.payrow .pnote{grid-column:1/3}}
+.payrow .box input{height:40px;font-size:14px}
+.ofoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.ofoot .sum{display:flex;flex-wrap:wrap;gap:20px;font-size:14px}
+.ofoot .sum b{font-size:18px}
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:16px}
+.ocard{padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--card);display:flex;flex-direction:column;gap:10px}
+.ocard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ocard .cl{padding:0;border:0;background:none;color:var(--ink);font:700 16px 'IBM Plex Sans',sans-serif;cursor:pointer;text-align:left}
+.ocard .cl:hover{text-decoration:underline}
+.ocard .meta{font-size:13px;color:var(--muted)}
+.ocard .due{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ocard .due.late{color:var(--danger)}
+.ocard .due.soon{color:var(--accentInk)}
+.ocard .cal{font-size:12px;font-weight:400;color:var(--muted)}
+.ocard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.ocard li{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.ocard .money{display:flex;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.ocard .money b{display:block;color:var(--ink);font-size:15px}
+.ocard .sel{height:36px;width:auto;font-size:13px}
+.ocard .acts{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px}
+.ocard .acts .l{display:flex;flex-wrap:wrap;gap:6px}
+/* summary */
+.month{display:flex;align-items:center;gap:4px}
+.month b{min-width:150px;text-align:center}
+.tops{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:16px}
+.tops ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.tops li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:8px;background:var(--field)}
+/* dialogs */
+dialog{border:0;padding:0;background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(15,17,21,.5)}
+dialog.sheet{margin:0 0 0 auto;height:100%;max-height:100%;width:min(640px,100%);max-width:100%}
+dialog.modal{width:min(560px,calc(100% - 32px));border-radius:14px}
+dialog.wide{width:min(760px,calc(100% - 32px))}
+.dhd{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+.dhd h2{margin:0;font-size:18px}
+.dbd{padding:20px;display:flex;flex-direction:column;gap:20px}
+.dsec{display:flex;flex-direction:column;gap:12px}
+.dsec h3{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.etab{min-width:480px}
+.etab td{padding:6px 6px;border-top:1px solid var(--line)}
+.etab th{padding:8px 6px;font-size:13px}
+.etab .box input{height:40px;font-size:14px;padding:0 8px}
+.tiers{display:flex;flex-direction:column;gap:8px}
+.tier{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+.tier .box{width:110px}
+.olist{display:flex;flex-direction:column;gap:8px}
+.olist button{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:52px;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.olist button:hover{border-color:var(--accent)}
+.budget{width:100%;border-radius:10px;border:1px solid var(--line);display:block;min-height:120px;background:var(--field)}
+.swl{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.dfoot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow mono">Quirón 3D · Cotizador</div>
+      <h1>Calculadora de costos de impresión 3D</h1>
+    </div>
+    <div class="hright">
+      <div class="alert" id="alert" role="status" hidden><span class="dot"></span><span id="alertTxt"></span></div>
+      <button type="button" class="btn" id="openCloud"><span class="dot" id="cloudDot" style="background:var(--muted)"></span><span id="cloudLbl">Conectar con Google</span></button>
+      <button type="button" class="btn" id="openTaller">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+        Mi taller
+      </button>
+    </div>
+  </header>
+
+  <div class="cols">
+    <div class="left">
+      <section class="card" aria-labelledby="files-title">
+        <h2 id="files-title">Archivo de la pieza</h2>
+        <label class="drop" id="drop">
+          <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <span><strong>Arrastrá o elegí archivos</strong><span class="hint">.gcode o .3mf laminado: completa tiempo y gramos solo. STL: vista 3D y peso estimado. También fotos de referencia.</span></span>
+          <input id="fileIn" type="file" multiple accept=".stl,.3mf,.gcode,.gco,.obj,.step,.stp,image/*" class="sr">
+        </label>
+        <div class="slice" id="sliceBox" hidden>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+          <span id="sliceTxt"></span>
+        </div>
+        <div class="stl" id="stlBox" hidden>
+          <div class="viewer" id="viewer" role="img" aria-label="Vista 3D de la pieza. Arrastrá para girar, rueda para acercar.">
+            <span class="vh">Arrastrá para girar · rueda para zoom</span>
+            <button type="button" class="btn sm vbtn" id="snapBtn">Usar esta vista como imagen</button>
+          </div>
+          <div class="stlinfo">
+            <dl class="kv mono" id="stlKv"></dl>
+            <div id="estBox">
+              <div class="mini">
+                <div class="f"><label for="w-infill">Relleno</label><div class="box"><input id="w-infill" type="number" step="any" min="0" inputmode="decimal"><span>%</span></div></div>
+                <div class="f"><label for="w-shell">Paredes</label><div class="box"><input id="w-shell" type="number" step="any" min="0" inputmode="decimal"><span>%</span></div></div>
+              </div>
+              <div class="est" style="margin-top:10px"><span><span class="hint">Peso estimado</span><br><b class="mono" id="estG">—</b></span><button type="button" class="btn sm" id="useEst">Usar este peso</button></div>
+              <p class="hint" style="margin-top:8px">Aproximado, con la densidad del material elegido. Para el valor exacto subí el .gcode o el .3mf laminado.</p>
+            </div>
+          </div>
+        </div>
+        <ul class="chips" id="pending" aria-label="Archivos que se guardan con esta pieza"></ul>
+        <p class="hint" id="filesHint">Los archivos se guardan al agregar la pieza a la lista.</p>
+      </section>
+
+      <section class="card" aria-labelledby="piece-title">
+        <h2 id="piece-title">Pieza</h2>
+        <div class="grid">
+          <div class="f wide"><label for="q-name">Nombre</label><div class="box"><input id="q-name" type="text" placeholder="Ej.: Llavero patita" autocomplete="off"></div></div>
+          <div class="f"><label for="q-mat">Material</label><select id="q-mat" class="sel"></select></div>
+          <div class="f" id="printerField"><label for="q-printer">Impresora</label><select id="q-printer" class="sel"></select></div>
+          <div class="f"><label for="q-perPlate">Piezas en la placa</label><div class="box"><input id="q-perPlate" type="number" step="1" min="1" inputmode="numeric" placeholder="1"><span>u.</span></div></div>
+          <div class="f"><label for="q-grams" id="gramsLbl">Peso</label><div class="box"><input id="q-grams" type="number" step="any" min="0" inputmode="decimal" placeholder="0"><span>g</span></div></div>
+          <div class="f"><label for="q-hours">Horas de impresión</label><div class="box"><input id="q-hours" type="number" step="1" min="0" inputmode="numeric" placeholder="0"><span>h</span></div></div>
+          <div class="f"><label for="q-minutes">Minutos</label><div class="box"><input id="q-minutes" type="number" step="1" min="0" inputmode="numeric" placeholder="0"><span>min</span></div></div>
+          <div class="f"><label for="q-postMin">Postproceso por pieza</label><div class="box"><input id="q-postMin" type="number" step="any" min="0" inputmode="decimal" placeholder="0"><span>min</span></div></div>
+          <div class="f"><label for="q-extras">Insumos extra por pieza</label><div class="box"><input id="q-extras" type="number" step="any" min="0" inputmode="decimal" placeholder="0"><span>$</span></div></div>
+          <div class="f"><label for="q-margin">Ganancia</label><div class="box"><input id="q-margin" type="number" step="any" min="0" inputmode="decimal"><span>%</span></div></div>
+        </div>
+        <p class="hint" id="plateHint" hidden></p>
+        <p class="warn" id="matWarn" hidden></p>
+        <p class="hint">Insumos extra: imanes, argollas, pintura, packaging. Ganancia vacía = la de tu taller.</p>
+      </section>
+    </div>
+
+    <aside>
+      <section class="res" id="res" aria-labelledby="res-title">
+        <div class="pvwrap" id="pvWrap" hidden><img id="pvImg" class="pv" alt="Imagen de la pieza"><span class="src" id="pvSrc"></span></div>
+        <div>
+          <h2 id="res-title">Precio por unidad</h2>
+          <div class="big mono" id="priceUnit">—</div>
+          <div class="pm" id="costLine"></div>
+        </div>
+        <p class="mwarn" id="emptyWarn" hidden>Cargá el peso y el tiempo, o subí el archivo del slicer.</p>
+        <div class="brk" id="brk"></div>
+        <div class="tot">
+          <div class="line"><span class="l">Subtotal</span><span class="mono" id="subtotal"></span></div>
+          <div class="line"><span class="l" id="failLbl"></span><span class="mono" id="failAmt"></span></div>
+          <div class="line" style="font-weight:600"><span>Costo por unidad</span><span class="mono" id="costUnit"></span></div>
+          <div class="line"><span class="l" id="profLbl"></span><span class="mono" id="profit"></span></div>
+          <div class="line" id="feeLine" hidden><span class="l" id="feeLbl"></span><span class="mono" id="feeAmt"></span></div>
+          <div class="line" id="adjLine" hidden><span class="l" id="adjLbl"></span><span class="mono" id="adjAmt"></span></div>
+        </div>
+        <button type="button" class="cta" id="addBtn">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span id="addLbl">Agregar a la lista</span>
+        </button>
+        <button type="button" class="cta2" id="toOrderBtn">Agregar a un pedido…</button>
+        <p class="editing" id="editing" hidden></p>
+        <div class="toast" id="toast" role="status"></div>
+        <details>
+          <summary>Ver cómo se calcula</summary>
+          <div>
+            <span>Con varias piezas en la placa, el tiempo y el peso se dividen por la cantidad.</span>
+            <span>Material = gramos × $/kg ÷ 1000</span>
+            <span>Energía = watts ÷ 1000 × horas × $/kWh</span>
+            <span>Amortización = horas × (costo impresora ÷ vida útil)</span>
+            <span>Precio = (subtotal + % fallo) × (1 + % ganancia) ÷ (1 − % comisión), con tu mínimo y redondeo</span>
+          </div>
+        </details>
+      </section>
+    </aside>
+  </div>
+
+  <section class="list" aria-labelledby="list-title">
+    <div class="lh">
+      <div>
+        <h2 id="list-title">Lista de precios</h2>
+        <span class="hint">Marcá las piezas de un cliente y tocá «Crear pedido».</span>
+      </div>
+      <div class="tools">
+        <label for="q" class="sr">Buscar en la lista</label>
+        <input id="q" class="search" type="search" placeholder="Buscar pieza o material">
+        <button type="button" class="btn" id="repriceBtn">Actualizar precios</button>
+        <button type="button" class="btn primary" id="mkOrder" disabled>Crear pedido</button>
+      </div>
+    </div>
+    <div class="empty" id="empty"><strong>Todavía no cotizaste ninguna pieza</strong>Completá la pieza y tocá «Agregar a la lista».</div>
+    <div class="tw" id="tw" hidden>
+      <table class="plist">
+        <thead><tr>
+          <th scope="col" style="width:44px"><span class="sr">Seleccionar para un pedido</span></th>
+          <th scope="col">Pieza</th><th scope="col">Material</th><th scope="col" class="r">Gramos</th><th scope="col" class="r">Tiempo</th>
+          <th scope="col" class="r">Costo u.</th><th scope="col" class="r">Precio u.</th>
+          <th scope="col"><span class="sr">Acciones</span></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="hint" id="noMatch" hidden></p>
+  </section>
+
+  <section class="list" aria-labelledby="orders-title">
+    <div class="lh">
+      <div>
+        <h2 id="orders-title">Pedidos</h2>
+        <span class="hint">Tocá el nombre de un cliente para ver todos sus pedidos.</span>
+      </div>
+      <div class="tools">
+        <label for="oq" class="sr">Buscar cliente</label>
+        <input id="oq" class="search" type="search" placeholder="Buscar cliente">
+        <div class="seg" role="group" aria-label="Filtrar pedidos">
+          <button type="button" data-f="active" aria-pressed="true">En curso</button>
+          <button type="button" data-f="done" aria-pressed="false">Entregados</button>
+          <button type="button" data-f="all" aria-pressed="false">Todos</button>
+        </div>
+        <button type="button" class="btn primary" id="newOrder">Nuevo pedido</button>
+      </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="card oform" id="oform" hidden>
+      <h3 id="ofTitle">Nuevo pedido</h3>
+      <div class="grid">
+        <div class="f"><label for="o-client">Cliente</label><div class="box"><input id="o-client" type="text" list="clientsDL" autocomplete="off"></div></div>
+        <div class="f"><label for="o-contact">Contacto</label><div class="box"><input id="o-contact" type="text" placeholder="WhatsApp, Instagram…"></div></div>
+        <div class="f"><label for="o-due">Fecha de entrega</label><div class="box"><input id="o-due" type="date"></div></div>
+        <div class="f"><label for="o-status">Estado</label><select id="o-status" class="sel"></select></div>
+        <div class="f"><label for="o-ship">Envío / embalaje</label><div class="box"><input id="o-ship" type="number" step="any" min="0" inputmode="decimal" placeholder="0"><span>$</span></div></div>
+      </div>
+      <datalist id="clientsDL"></datalist>
+      <p class="err" id="o-err" hidden></p>
+      <div class="f"><label for="o-notes">Notas</label><textarea id="o-notes" class="ta" placeholder="Colores, detalles, forma de envío…"></textarea></div>
+      <div class="tw"><table class="oitems">
+        <thead><tr><th scope="col">Pieza</th><th scope="col" class="r">Precio u.</th><th scope="col" class="r">Cant.</th><th scope="col" class="r">Subtotal</th><th scope="col"><span class="sr">Quitar</span></th></tr></thead>
+        <tbody id="o-items"></tbody>
+      </table></div>
+      <div><button type="button" class="btn sm" id="oAddSel" disabled>Agregar las marcadas en la lista</button></div>
+      <div class="sugg"><span id="o-sugg"></span><button type="button" class="btn sm" id="o-useSugg">Usar fecha sugerida</button></div>
+      <div class="dsec">
+        <div class="lbl">Pagos recibidos</div>
+        <div class="pays" id="o-pays"></div>
+        <div><button type="button" class="btn sm" id="o-addPay">+ Agregar pago</button></div>
+      </div>
+      <div class="ofoot">
+        <div class="sum mono"><span><span class="hint">Total</span><br><b id="o-total">—</b></span><span><span class="hint">Cobrado</span><br><b id="o-paid">—</b></span><span><span class="hint">Saldo</span><br><b id="o-saldo">—</b></span></div>
+        <div class="tools"><button type="button" class="btn" id="oCancel">Cancelar</button><button type="button" class="btn primary" id="oSave">Guardar pedido</button></div>
+      </div>
+    </div>
+
+    <p class="hint" id="clientFilter" hidden></p>
+    <div class="empty" id="ordersEmpty"><strong>No hay pedidos</strong>Marcá piezas en la lista de precios y tocá «Crear pedido», o empezá uno con «Nuevo pedido».</div>
+    <div class="ogrid" id="orders"></div>
+  </section>
+
+  <section class="list" aria-labelledby="sum-title">
+    <div class="lh">
+      <div>
+        <h2 id="sum-title">Resumen del mes</h2>
+        <span class="hint">Pedidos con entrega en el mes, sin los cancelados. «Cobrado» suma los pagos recibidos en el mes.</span>
+      </div>
+      <div class="month">
+        <button type="button" class="ib" id="mPrev" aria-label="Mes anterior"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <b id="mLabel" aria-live="polite"></b>
+        <button type="button" class="ib" id="mNext" aria-label="Mes siguiente"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+    </div>
+    <div class="stats" id="mStats"></div>
+    <div class="tops">
+      <div class="dsec"><h3 class="lbl" style="margin:0">Piezas más vendidas</h3><ol id="mTopP"></ol></div>
+      <div class="dsec"><h3 class="lbl" style="margin:0">Mejores clientes</h3><ol id="mTopC"></ol></div>
+    </div>
+  </section>
+</div>
+
+<div class="mbar" id="mbar" aria-hidden="true">
+  <div><div class="s">Precio por unidad</div><div class="p" id="mPrice">—</div></div>
+  <button type="button" class="btn primary" id="mAdd" tabindex="-1">Agregar a la lista</button>
+</div>
+
+<!-- Mi taller -->
+<dialog class="sheet" id="tallerDlg" aria-labelledby="taller-title">
+  <div class="dhd"><h2 id="taller-title">Mi taller</h2><button type="button" class="btn primary sm" id="closeTaller">Listo</button></div>
+  <div class="dbd">
+    <p class="hint">Se guarda solo y se usa en las cotizaciones nuevas. Las ya guardadas no cambian hasta que uses «Actualizar precios».</p>
+    <div class="dsec">
+      <h3>Materiales</h3>
+      <div class="tw"><table class="etab">
+        <thead><tr><th scope="col">Nombre</th><th scope="col">Precio del rollo ($/kg)</th><th scope="col">Densidad (g/cm³)</th><th scope="col"><span class="sr">Quitar</span></th></tr></thead>
+        <tbody id="matRows"></tbody>
+      </table></div>
+      <div><button type="button" class="btn sm" id="addMat">+ Agregar material</button></div>
+    </div>
+    <div class="dsec">
+      <h3>Impresoras</h3>
+      <div class="tw"><table class="etab">
+        <thead><tr><th scope="col">Nombre</th><th scope="col">Consumo (W)</th><th scope="col">Costo ($)</th><th scope="col">Vida útil (h)</th><th scope="col"><span class="sr">Quitar</span></th></tr></thead>
+        <tbody id="prnRows"></tbody>
+      </table></div>
+      <div><button type="button" class="btn sm" id="addPrn">+ Agregar impresora</button></div>
+      <div class="grid" id="tg-energy"></div>
+    </div>
+    <div class="dsec">
+      <h3>Trabajo, ganancia y cobro</h3>
+      <div class="grid" id="tg-work"></div>
+      <p class="hint">La comisión de cobro (Mercado Pago, Etsy, etc.) se suma al precio para que tu ganancia no se achique.</p>
+    </div>
+    <div class="dsec">
+      <h3>Precio final</h3>
+      <div class="grid">
+        <div class="f"><label for="t-roundTo">Redondear hacia arriba a</label>
+          <select id="t-roundTo" class="sel"><option value="0">Sin redondeo</option><option value="10">$10</option><option value="50">$50</option><option value="100">$100</option><option value="500">$500</option><option value="1000">$1.000</option></select></div>
+        <div id="tg-min" style="display:contents"></div>
+      </div>
+      <div class="lbl">Descuento por cantidad (en pedidos)</div>
+      <div class="tiers">
+        <div class="tier">Desde <div class="box"><input id="t-d1q" type="number" min="0" step="1" inputmode="numeric" aria-label="Cantidad mínima, primer descuento"><span>u.</span></div> → <div class="box"><input id="t-d1p" type="number" min="0" step="any" inputmode="decimal" aria-label="Porcentaje del primer descuento"><span>%</span></div></div>
+        <div class="tier">Desde <div class="box"><input id="t-d2q" type="number" min="0" step="1" inputmode="numeric" aria-label="Cantidad mínima, segundo descuento"><span>u.</span></div> → <div class="box"><input id="t-d2p" type="number" min="0" step="any" inputmode="decimal" aria-label="Porcentaje del segundo descuento"><span>%</span></div></div>
+      </div>
+      <p class="hint">Dejá en 0 para no aplicar descuento.</p>
+    </div>
+    <div class="dsec">
+      <h3>Entregas</h3>
+      <div class="grid" id="tg-deliv"></div>
+      <label class="swl"><input type="checkbox" class="chk" id="t-calOn"> Agendar las entregas en mi Google Calendar (con Google conectado)</label>
+      <p class="hint">La fecha sugerida reparte las horas de impresión del pedido en tus horas por día, suma el margen y no cuenta domingos. Con Calendar activado, cada pedido crea un evento de día completo con recordatorio el día anterior.</p>
+    </div>
+    <div class="dsec">
+      <h3>Mensajes y presupuestos</h3>
+      <div class="grid">
+        <div class="f"><label for="t-bizName">Nombre del negocio</label><div class="box"><input id="t-bizName" type="text"></div></div>
+        <div class="f"><label for="t-bizContact">Tu contacto (pie del presupuesto)</label><div class="box"><input id="t-bizContact" type="text" placeholder="@quiron.net · WhatsApp"></div></div>
+      </div>
+    </div>
+    <div class="dsec">
+      <h3>Copia de seguridad</h3>
+      <p class="hint">Descargá todo (lista, pedidos y taller) en un archivo. Si algún día lo necesitás, lo restaurás desde acá.</p>
+      <div class="tools"><button type="button" class="btn" id="bkDl">Descargar copia</button><label class="btn" for="bkIn">Restaurar desde archivo</label><input id="bkIn" type="file" accept=".json,application/json" class="sr"></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Nube -->
+<dialog class="modal" id="cloudDlg" aria-labelledby="cloud-title">
+  <div class="dhd"><h2 id="cloud-title">Conectar con Google</h2><button type="button" class="ib" data-close aria-label="Cerrar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dbd">
+    <p class="hint" style="font-size:14px;color:var(--ink2)">Con tu script de Google Apps Script, la lista y los pedidos se guardan en tu Google Sheet, los archivos en tu Drive y las entregas en tu Calendar. Sin conectar, todo queda solo en este navegador.</p>
+    <div class="f"><label for="c-url">URL del script (termina en /exec)</label><div class="box"><input id="c-url" type="text" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></div></div>
+    <div class="f"><label for="c-key">Clave</label><div class="box"><input id="c-key" type="password" autocomplete="off"></div></div>
+    <p class="hint" id="c-status" role="status"></p>
+    <p class="hint">La URL y la clave quedan guardadas solo en este navegador. <a href="https://github.com/edukaos/cotizador-3d#guardar-en-tu-google-sheet--drive--calendar" id="c-help" target="_blank" rel="noopener">Cómo instalar el script</a></p>
+    <div class="dfoot"><button type="button" class="btn" id="c-off">Desconectar</button><button type="button" class="btn primary" id="c-on">Conectar</button></div>
+  </div>
+</dialog>
+
+<!-- Agregar a pedido -->
+<dialog class="modal" id="toOrderDlg" aria-labelledby="too-title">
+  <div class="dhd"><h2 id="too-title">Agregar a un pedido</h2><button type="button" class="ib" data-close aria-label="Cerrar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dbd">
+    <p class="hint">La pieza se guarda en la lista y se suma al pedido que elijas.</p>
+    <div class="olist" id="toOrderList"></div>
+  </div>
+</dialog>
+
+<!-- Mensaje / presupuesto -->
+<dialog class="modal wide" id="msgDlg" aria-labelledby="msg-title">
+  <div class="dhd"><h2 id="msg-title">Presupuesto para el cliente</h2><button type="button" class="ib" data-close aria-label="Cerrar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dbd">
+    <div class="dsec">
+      <div class="lbl">Imagen del presupuesto</div>
+      <img id="budgetImg" class="budget" alt="Generando presupuesto…">
+      <div class="dfoot" style="justify-content:flex-start"><button type="button" class="btn" id="budgetDl">Descargar imagen</button><button type="button" class="btn" id="msgDl">Descargar fotos de las piezas</button></div>
+    </div>
+    <div class="f"><label for="msgText">Mensaje (podés editarlo)</label><textarea id="msgText" class="ta" style="min-height:200px"></textarea></div>
+    <p class="hint" id="msgHint"></p>
+    <div class="dfoot"><button type="button" class="btn" id="msgCopy">Copiar mensaje</button><a class="btn primary" id="msgWa" href="#" target="_blank" rel="noopener">Abrir WhatsApp</a></div>
+  </div>
+</dialog>
+
+<!-- Diálogo genérico -->
+<dialog class="modal" id="genDlg" aria-labelledby="gen-title">
+  <div class="dhd"><h2 id="gen-title"></h2><button type="button" class="ib" id="genX" aria-label="Cerrar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dbd">
+    <div id="genBody" class="dsec"></div>
+    <p class="err" id="genErr" hidden></p>
+    <div class="dfoot"><button type="button" class="btn" id="genCancel">Cancelar</button><button type="button" class="btn primary" id="genOk"></button></div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+// ================= constants =================
+var LS_KEY='quiron-cotizador-3d-v3';
+var CFG_KEY='quiron-cotizador-3d-nube';
+var UP_MAX=15*1024*1024;
+var DRIVE='Google Drive', CAL='Google Calendar', FOLDER_NAME='Quirón 3D – Pedidos';
+var DRIVE_MAX=10*1024*1024, ASSET_MAX=20*1024*1024;
+var THREE_URL='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+var JSZIP_URL='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+var STATUSES=['Presupuesto','Confirmado','En producción','Listo','Entregado','Cancelado'];
+var T_DEFAULT={kwh:'150',laborRate:'8000',failPct:'10',marginPct:'100',feePct:'0',
+  roundTo:'100',minPrice:'0',d1q:'0',d1p:'0',d2q:'0',d2p:'0',hoursPerDay:'10',bufferDays:'2',calOn:'1',
+  infill:'20',shell:'30',bizName:'Quirón 3D',bizContact:''};
+var T_FIELDS={
+  'tg-energy':[['kwh','Precio de la luz','$/kWh']],
+  'tg-work':[['laborRate','Tu hora de trabajo','$/h'],['failPct','Margen de fallo','%'],['marginPct','Ganancia por defecto','%'],['feePct','Comisión de cobro','%']],
+  'tg-min':[['minPrice','Precio mínimo por pieza','$']],
+  'tg-deliv':[['hoursPerDay','Horas de impresión por día','h'],['bufferDays','Días de margen','d']]
+};
+var MAT_DEFAULT=[{id:'pla',name:'PLA',kgPrice:'25000',density:'1.24'},{id:'petg',name:'PETG',kgPrice:'',density:'1.27'},{id:'tpu',name:'TPU',kgPrice:'',density:'1.21'},{id:'abs',name:'ABS',kgPrice:'',density:'1.04'}];
+var PRN_DEFAULT=[{id:'p1',name:'Mi impresora',watts:'150',printerCost:'800000',lifeHours:'5000'}];
+var Q_EMPTY={name:'',materialId:'pla',printerId:'p1',perPlate:'',grams:'',hours:'',minutes:'',postMin:'',extras:'',marginPct:''};
+
+// ================= state =================
+var state={t:Object.assign({},T_DEFAULT),mats:clone(MAT_DEFAULT),printers:clone(PRN_DEFAULT),q:Object.assign({},Q_EMPTY),
+  list:[],orders:[],sel:{},editingId:null,query:'',ofilter:'active',oquery:'',month:null};
+var pending=[], meshStats=null, slice=null, oDraft=null, thumb=null, thumbSrc='';
+var gas=null,downloads=null,canWrite=true;
+var driveState='unknown', calState='unknown', cloud='pending', driveMsg='', calMsg='';
+
+// ================= helpers =================
+function clone(x){return JSON.parse(JSON.stringify(x));}
+function num(v){var n=parseFloat(String(v==null?'':v).replace(',','.'));return isFinite(n)&&n>0?n:0;}
+var nf=new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
+function money(v){return nf.format(Math.round(v||0));}
+function fmtTime(h){var t=Math.round(h*60);return Math.floor(t/60)+'h '+String(t%60).padStart(2,'0')+'m';}
+function fmtSize(b){return b>1048576?(b/1048576).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.round(b/1024))+' KB';}
+function dec(v,d){return Number(v).toFixed(d).replace('.',',');}
+function $(id){return document.getElementById(id);}
+function el(tag,attrs,kids){var e=document.createElement(tag);if(attrs)for(var k in attrs){if(attrs[k]==null)continue;if(k==='text')e.textContent=attrs[k];else e.setAttribute(k,attrs[k]);}(kids||[]).forEach(function(c){if(c!=null&&c!==false)e.appendChild(typeof c==='string'?document.createTextNode(c):c);});return e;}
+function ext(name){var m=/\.([a-z0-9]+)$/i.exec(name||'');return m?m[1].toLowerCase():'';}
+function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function today(){return iso(new Date());}
+function parseIso(s){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s||'');return m?new Date(+m[1],+m[2]-1,+m[3]):null;}
+function fmtDate(s,long){var d=parseIso(s);return d?d.toLocaleDateString('es-AR',long?{weekday:'long',day:'numeric',month:'long'}:{weekday:'short',day:'2-digit',month:'2-digit'}):'sin fecha';}
+var toastT;function toast(t,ms){$('toast').textContent=t;clearTimeout(toastT);toastT=setTimeout(function(){$('toast').textContent='';},ms||4000);}
+function refreshAlert(){
+  var msgs=[];
+  if(!gas)msgs.push('Guardando solo en este navegador');
+  else if(cloud==='offline')msgs.push('Sin conexión con tu Google');
+  $('alert').hidden=!msgs.length;$('alertTxt').textContent=msgs.join(' · ');
+  $('cloudDot').style.background=gas&&cloud==='ok'?'var(--ok)':gas?'#D97706':'var(--muted)';
+  $('cloudLbl').textContent=gas?'Google conectado':'Conectar con Google';
+}
+function armConfirm(btn,key,msg,fn){
+  if(btn.dataset.armed===key){btn.dataset.armed='';btn.classList.remove('armed');fn();return;}
+  btn.dataset.armed=key;btn.classList.add('armed');toast(msg);
+  setTimeout(function(){if(btn.dataset.armed===key){btn.dataset.armed='';btn.classList.remove('armed');}},3000);
+}
+var I={
+  edit:'<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',
+  del:'<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/>',
+  dup:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/>',
+  msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  pay:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/>'
+};
+function svg(name){return '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+I[name]+'</svg>';}
+function iconBtn(cls,label,icon){var b=el('button',{type:'button',class:'ib '+(cls||''),'aria-label':label,title:label});b.innerHTML=svg(icon);return b;}
+function txtBtn(label,icon,cls){var b=el('button',{type:'button',class:'btn sm '+(cls||'')});b.innerHTML=svg(icon);b.appendChild(document.createTextNode(label));return b;}
+function loadScript(url,global){
+  if(window[global])return Promise.resolve(window[global]);
+  loadScript.p=loadScript.p||{};
+  if(loadScript.p[url])return loadScript.p[url];
+  return loadScript.p[url]=new Promise(function(res,rej){var s=document.createElement('script');s.src=url;s.onload=function(){res(window[global]);};s.onerror=rej;document.head.appendChild(s);});
+}
+Array.prototype.forEach.call(document.querySelectorAll('[data-close]'),function(b){b.onclick=function(){b.closest('dialog').close();};});
+
+// --- generic dialog ---
+var genResolve=null,genValidate=null;
+function ask(title,body,okText,opts){
+  opts=opts||{};
+  $('gen-title').textContent=title;var gb=$('genBody');gb.innerHTML='';
+  (Array.isArray(body)?body:[body]).forEach(function(n){if(n)gb.appendChild(typeof n==='string'?el('p',{class:'hint',style:'font-size:14px;color:var(--ink2)',text:n}):n);});
+  $('genOk').textContent=okText||'Aceptar';$('genCancel').textContent=opts.cancel||'Cancelar';$('genErr').hidden=true;
+  genValidate=opts.validate||null;
+  $('genDlg').showModal();
+  return new Promise(function(res){genResolve=res;});
+}
+function genFinish(v){var r=genResolve;genResolve=null;genValidate=null;if(r)r(v);}
+$('genOk').onclick=function(){if(genValidate&&genValidate()===false)return;var r=genResolve;genResolve=null;genValidate=null;$('genDlg').close();if(r)r(true);};
+$('genCancel').onclick=function(){$('genDlg').close();};$('genX').onclick=function(){$('genDlg').close();};
+$('genDlg').addEventListener('close',function(){if($('genDlg').open)return;genFinish(false);});
+
+// ================= pricing =================
+function curMat(){return state.mats.find(function(m){return m.id===state.q.materialId;})||state.mats[0]||null;}
+function curPrn(){return state.printers.find(function(p){return p.id===state.q.printerId;})||state.printers[0]||null;}
+function flat(){
+  var m=curMat(),p=curPrn();
+  var f=Object.assign({},state.t,
+    {watts:p?p.watts:'0',printerCost:p?p.printerCost:'0',lifeHours:p?p.lifeHours:'0',printer:p?p.name:''},
+    {kgPrice:m?m.kgPrice:'',density:m?m.density:'1.24',material:m?m.name:''},state.q);
+  if(String(state.q.marginPct).trim()==='')f.marginPct=state.t.marginPct;
+  return f;
+}
+function calc(f){
+  var pp=Math.max(1,Math.round(num(f.perPlate))||1);
+  var h=(num(f.hours)+num(f.minutes)/60)/pp, g=num(f.grams)/pp, life=num(f.lifeHours);
+  var material=g/1000*num(f.kgPrice), energy=num(f.watts)/1000*h*num(f.kwh);
+  var amort=life>0?h*num(f.printerCost)/life:0, labor=num(f.postMin)/60*num(f.laborRate), extras=num(f.extras);
+  var subtotal=material+energy+amort+labor+extras, failAmt=subtotal*num(f.failPct)/100, cost=subtotal+failAmt;
+  var raw=cost*(1+num(f.marginPct)/100), fee=Math.min(90,num(f.feePct));
+  var withFee=fee?raw/(1-fee/100):raw, price=withFee;
+  if(raw>0&&num(f.minPrice)>price)price=num(f.minPrice);
+  var r=num(f.roundTo);if(r>0&&price>0)price=Math.ceil(price/r-1e-9)*r;
+  return {pp:pp,hours:h,grams:g,material:material,energy:energy,amort:amort,labor:labor,extras:extras,subtotal:subtotal,failAmt:failAmt,cost:cost,raw:raw,feeAmt:withFee-raw,withFee:withFee,price:price,adj:price-withFee,minHit:raw>0&&num(f.minPrice)>withFee};
+}
+function discFor(qty){
+  var t=state.t;
+  if(num(t.d2q)&&qty>=num(t.d2q))return num(t.d2p);
+  if(num(t.d1q)&&qty>=num(t.d1q))return num(t.d1p);
+  return 0;
+}
+
+// ================= quote form =================
+var QF=['name','perPlate','grams','hours','minutes','postMin','extras'];
+function fillQuote(){
+  QF.forEach(function(k){$('q-'+k).value=state.q[k]??'';});
+  $('q-margin').value=state.q.marginPct??'';$('q-margin').placeholder=state.t.marginPct+' (taller)';
+  renderMatSelect();renderPrnSelect();
+}
+function renderMatSelect(){
+  var s=$('q-mat');s.innerHTML='';
+  state.mats.forEach(function(m){s.appendChild(el('option',{value:m.id,text:(m.name||'Sin nombre')+(num(m.kgPrice)?'':' (sin precio)')}));});
+  if(!state.mats.some(function(m){return m.id===state.q.materialId;})&&state.mats[0])state.q.materialId=state.mats[0].id;
+  s.value=state.q.materialId;
+}
+function renderPrnSelect(){
+  var s=$('q-printer');s.innerHTML='';
+  state.printers.forEach(function(p){s.appendChild(el('option',{value:p.id,text:p.name||'Sin nombre'}));});
+  if(!state.printers.some(function(p){return p.id===state.q.printerId;})&&state.printers[0])state.q.printerId=state.printers[0].id;
+  s.value=state.q.printerId;$('printerField').hidden=state.printers.length<2;
+}
+QF.forEach(function(k){$('q-'+k).addEventListener('input',function(){state.q[k]=$('q-'+k).value;renderResult();});});
+$('q-margin').addEventListener('input',function(){state.q.marginPct=$('q-margin').value;renderResult();});
+$('q-mat').addEventListener('change',function(){state.q.materialId=$('q-mat').value;renderEstimate();renderResult();});
+$('q-printer').addEventListener('change',function(){state.q.printerId=$('q-printer').value;renderResult();});
+
+function renderResult(){
+  var f=flat(),c=calc(f),m=curMat();
+  $('priceUnit').textContent=money(c.price);$('mPrice').textContent=money(c.price);
+  $('costLine').textContent='Costo de producción '+money(c.cost)+(m?' · '+m.name:'')+(state.printers.length>1&&f.printer?' · '+f.printer:'');
+  $('emptyWarn').hidden=!!(num(f.grams)||c.hours);
+  $('gramsLbl').textContent=c.pp>1?'Peso de la placa':'Peso';
+  var ph=$('plateHint');ph.hidden=c.pp<2;
+  if(c.pp>1)ph.textContent='Placa de '+c.pp+' piezas: cada una lleva '+dec(c.grams,1)+' g y '+fmtTime(c.hours)+' de impresión. Cargá el tiempo y el peso de la placa entera.';
+  var mw=$('matWarn');
+  if(m&&!num(m.kgPrice)){mw.hidden=false;mw.textContent='El material «'+m.name+'» no tiene precio cargado. ';var b=el('button',{type:'button',class:'linkbtn',text:'Cargarlo en Mi taller'});b.onclick=openTaller;mw.appendChild(b);}else mw.hidden=true;
+  var parts=[['Filamento',c.material],['Energía',c.energy],['Amortización',c.amort],['Mano de obra',c.labor],['Insumos extra',c.extras]];
+  var max=Math.max.apply(null,parts.map(function(p){return p[1];}).concat([0.0001]));
+  var b2=$('brk');b2.innerHTML='';
+  parts.forEach(function(p){
+    var bar=el('div',{class:'bar'},[el('i')]);bar.firstChild.style.width=Math.round(p[1]/max*100)+'%';
+    b2.appendChild(el('div',null,[el('div',{class:'line'},[el('span',{class:'l',text:p[0]}),el('span',{class:'mono',text:money(p[1])})]),bar]));
+  });
+  $('subtotal').textContent=money(c.subtotal);
+  $('failLbl').textContent='+ Margen de fallo ('+num(f.failPct)+'%)';$('failAmt').textContent=money(c.failAmt);
+  $('costUnit').textContent=money(c.cost);
+  $('profLbl').textContent='+ Ganancia ('+num(f.marginPct)+'%)';$('profit').textContent=money(c.raw-c.cost);
+  $('feeLine').hidden=!(c.feeAmt>0.5);$('feeLbl').textContent='+ Comisión de cobro ('+num(f.feePct)+'%)';$('feeAmt').textContent=money(c.feeAmt);
+  $('adjLine').hidden=!(c.adj>0.5);
+  $('adjLbl').textContent=c.minHit?'+ Hasta el precio mínimo':'+ Redondeo';$('adjAmt').textContent=money(c.adj);
+  var ed=state.editingId&&state.list.find(function(x){return x.id===state.editingId;});
+  $('addLbl').textContent=ed?'Guardar cambios':'Agregar a la lista';$('mAdd').textContent=ed?'Guardar cambios':'Agregar a la lista';
+  $('toOrderBtn').hidden=!!ed||!canWrite;
+  var p=$('editing');
+  if(ed){p.hidden=false;p.textContent='Editando «'+ed.name+'». ';var cb=el('button',{type:'button',class:'linkbtn',text:'Cancelar'});cb.onclick=function(){state.editingId=null;newQuote();};p.appendChild(cb);}
+  else p.hidden=true;
+}
+function newQuote(){
+  var mid=state.q.materialId,pid=state.q.printerId;state.q=Object.assign({},Q_EMPTY,{materialId:mid,printerId:pid});
+  resetFiles();fillQuote();renderResult();
+}
+
+// ================= files =================
+function kindOf(file){var x=ext(file.name);if(x==='stl')return 'stl';if(x==='3mf')return '3mf';if(x==='gcode'||x==='gco')return 'gcode';if(/^image\//.test(file.type))return 'image';return 'other';}
+function mimeOf(file){if(file.type)return file.type;var x=ext(file.name);return x==='stl'?'model/stl':x==='3mf'?'model/3mf':x==='obj'?'model/obj':x==='gcode'||x==='gco'?'text/x-gcode':'application/octet-stream';}
+function estimateGrams(){
+  if(!meshStats)return 0;var m=curMat();
+  var s=Math.min(100,num(state.t.shell))/100,i=Math.min(100,num(state.t.infill))/100;
+  return meshStats.volume*num(m?m.density:1.24)*(s+(1-s)*i);
+}
+function renderEstimate(){var g=estimateGrams();$('estG').textContent=g?Math.round(g).toLocaleString('es-AR')+' g':'—';}
+$('useEst').addEventListener('click',function(){var g=estimateGrams();if(!g)return;state.q.grams=String(Math.round(g));fillQuote();renderResult();toast('Peso actualizado a '+Math.round(g)+' g');});
+[['w-infill','infill'],['w-shell','shell']].forEach(function(p){$(p[0]).addEventListener('input',function(){state.t[p[1]]=$(p[0]).value;renderEstimate();saveTallerSoon();});});
+function renderPending(){
+  var ul=$('pending');ul.innerHTML='';
+  pending.forEach(function(p){
+    var vis=p.thumb?el('img',{src:p.thumb,alt:''}):el('span',{class:'ic',text:(ext(p.file.name)||'arch').toUpperCase().slice(0,4)});
+    var rm=el('button',{type:'button','aria-label':'Quitar '+p.file.name,title:'Quitar',text:'✕'});
+    rm.onclick=function(){pending=pending.filter(function(x){return x!==p;});if(p.thumb)try{URL.revokeObjectURL(p.thumb);}catch(e){}renderPending();};
+    ul.appendChild(el('li',{class:'chip'},[vis,el('span',{class:'nm',text:p.file.name}),el('span',{class:'hint mono',text:fmtSize(p.file.size)}),rm]));
+  });
+}
+function resetFiles(){
+  pending.forEach(function(p){if(p.thumb)try{URL.revokeObjectURL(p.thumb);}catch(e){}});
+  pending=[];meshStats=null;slice=null;thumb=null;thumbSrc='';$('stlBox').hidden=true;$('sliceBox').hidden=true;renderPending();renderThumb();
+}
+function setMesh(m,name){
+  meshStats={name:name,volume:m.volume,dims:m.dims,triangles:m.count};
+  $('stlBox').hidden=false;var kv=$('stlKv');kv.innerHTML='';
+  [['Archivo',name],['Medidas',m.dims.map(function(d){return dec(d,1);}).join(' × ')+' mm'],['Volumen',dec(m.volume,1)+' cm³']].forEach(function(r){
+    kv.appendChild(el('dt',{text:r[0]}));kv.appendChild(el('dd',{text:r[1],title:r[1]}));});
+  $('estBox').hidden=!!slice;
+  $('w-infill').value=state.t.infill;$('w-shell').value=state.t.shell;
+  renderEstimate();
+  if(!slice){var g=estimateGrams();if(g){state.q.grams=String(Math.round(g));fillQuote();renderResult();toast('Peso estimado desde el modelo: '+Math.round(g)+' g');}}
+  showModel(m.positions);
+}
+function setSlice(r,fname){
+  if(!r||(!r.sec&&!r.g&&!r.meters)){toast('«'+fname+'» no tiene datos de laminado. Laminalo y exportalo de nuevo.',7000);return false;}
+  var m=curMat(),g=r.g||(r.meters?r.meters*2.405*num(m?m.density:1.24):0);
+  slice={source:r.source||'slicer',sec:r.sec||0,g:g||0,file:fname};
+  if(r.sec){var tm=Math.round(r.sec/60);state.q.hours=String(Math.floor(tm/60));state.q.minutes=String(tm%60);}
+  if(g)state.q.grams=String(Math.round(g*10)/10);
+  if(!state.q.name.trim()){state.q.name=fname.replace(/(\.gcode)?\.(3mf|gcode|gco)$/i,'').replace(/[_]+/g,' ').slice(0,60);}
+  fillQuote();renderResult();
+  $('sliceBox').hidden=false;
+  $('sliceTxt').textContent='Datos de '+slice.source+': '+(slice.sec?fmtTime(slice.sec/3600):'tiempo no informado')+' · '+(g?dec(g,1)+' g':'peso no informado')+(r.meters&&!r.g?' (calculado desde los metros)':'')+'. Si la placa tiene varias piezas, indicalo en «Piezas en la placa».';
+  $('estBox').hidden=true;
+  return true;
+}
+function addFiles(list){
+  Array.prototype.forEach.call(list,function(file){
+    var k=kindOf(file);
+    pending.push({file:file,kind:k,thumb:k==='image'?URL.createObjectURL(file):null});
+    if(k==='stl'){
+      file.arrayBuffer().then(function(buf){var m=parseSTL(buf);if(!m)return toast('No pude leer «'+file.name+'» como STL.');setMesh(m,file.name);})
+        .catch(function(){toast('No pude abrir «'+file.name+'».');});
+    }else if(k==='gcode'){
+      readEnds(file).then(function(t){setSlice(parseGcode(t),file.name);var th=gcodeThumb(t);if(th)setThumb(th,'slicer');}).catch(function(){toast('No pude leer «'+file.name+'».');});
+    }else if(k==='3mf'){
+      toast('Leyendo '+file.name+'…',2000);
+      parse3mf(file).then(function(r){
+        if(r.sec||r.g)setSlice(r,file.name);
+        if(r.thumb)setThumb(r.thumb,'slicer');
+        if(r.mesh)setMesh(r.mesh,file.name);
+        if(!r.sec&&!r.g&&!r.mesh)toast('No encontré datos en «'+file.name+'».');
+        else if(!r.sec&&!r.g)toast('Proyecto sin laminar: estimé el peso desde el modelo. Para el dato exacto, subí el .gcode.3mf laminado.',7000);
+      }).catch(function(){toast('No pude abrir «'+file.name+'».');});
+    }
+  });
+  renderPending();
+}
+var fileIn=$('fileIn');
+fileIn.addEventListener('change',function(){addFiles(fileIn.files);fileIn.value='';});
+var drop=$('drop');
+['dragenter','dragover'].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.add('over');});});
+['dragleave','drop'].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.remove('over');});});
+drop.addEventListener('drop',function(e){if(e.dataTransfer&&e.dataTransfer.files)addFiles(e.dataTransfer.files);});
+
+// --- image ---
+function setThumb(src,source){
+  return new Promise(function(res){
+    var img=new Image();
+    img.onload=function(){
+      var W=400,H=300,c=document.createElement('canvas');c.width=W;c.height=H;var x=c.getContext('2d');
+      x.fillStyle='#EEF0F3';x.fillRect(0,0,W,H);
+      var k=Math.min(W/img.width,H/img.height),w=img.width*k,h=img.height*k;
+      x.drawImage(img,(W-w)/2,(H-h)/2,w,h);
+      thumb=c.toDataURL('image/jpeg',0.8);thumbSrc=source;renderThumb();res(true);
+    };
+    img.onerror=function(){res(false);};
+    img.src=src;
+  });
+}
+function renderThumb(){
+  $('pvWrap').hidden=!thumb;
+  if(thumb){$('pvImg').src=thumb;$('pvSrc').textContent=thumbSrc==='slicer'?'Vista del slicer':thumbSrc==='saved'?'Imagen guardada':'Vista 3D';}
+}
+function gcodeThumb(t){
+  var re=/;\s*thumbnail(_JPG|_PNG)?\s+begin\s+(\d+)x(\d+)[^\n]*\n([\s\S]*?);\s*thumbnail(?:_JPG|_PNG)?\s+end/gi,m,best=null;
+  while((m=re.exec(t))){var a=+m[2]*+m[3];if(!best||a>best.a)best={a:a,type:(m[1]||'').toUpperCase()==='_JPG'?'jpeg':'png',data:m[4].replace(/^;\s?/gm,'').replace(/\s+/g,'')};}
+  return best?'data:image/'+best.type+';base64,'+best.data:null;
+}
+function snapshot(){
+  if(!three||!three.mesh||!window.THREE)return;
+  var T=window.THREE;
+  if(!three.r2){three.r2=new T.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});three.r2.setPixelRatio(1);three.r2.setSize(640,480,false);}
+  var cam=three.camera,a=cam.aspect;
+  cam.aspect=4/3;cam.position.set(0,0,three.dist*0.85);cam.lookAt(0,0,0);cam.updateProjectionMatrix();
+  three.pivot.rotation.set(three.rx,0,three.ry);three.r2.render(three.scene,cam);
+  var url=three.r2.domElement.toDataURL('image/png');
+  cam.aspect=a;cam.updateProjectionMatrix();three.draw();
+  return setThumb(url,'render');
+}
+$('snapBtn').addEventListener('click',function(){snapshot();toast('Imagen actualizada con esta vista');});
+
+// --- gcode ---
+function readEnds(file){
+  var N=600*1024;
+  if(file.size<=N*2)return file.text();
+  return Promise.all([file.slice(0,N).text(),file.slice(file.size-N).text()]).then(function(a){return a[0]+'\n'+a[1];});
+}
+function durToSec(s){
+  if(!s)return 0;var t=0,m;
+  if((m=/(\d+)\s*d/i.exec(s)))t+=+m[1]*86400;
+  if((m=/(\d+)\s*h/i.exec(s)))t+=+m[1]*3600;
+  if((m=/(\d+)\s*m(?!s)/i.exec(s)))t+=+m[1]*60;
+  if((m=/(\d+)\s*s/i.exec(s)))t+=+m[1];
+  if(!t&&/^\s*\d+\s*$/.test(s))t=+s;
+  return t;
+}
+function parseGcode(t){
+  var r={},m;
+  if(/BambuStudio/i.test(t))r.source='Bambu Studio';else if(/OrcaSlicer/i.test(t))r.source='OrcaSlicer';
+  else if(/PrusaSlicer/i.test(t))r.source='PrusaSlicer';else if(/Cura/i.test(t))r.source='Cura';else if(/SuperSlicer/i.test(t))r.source='SuperSlicer';
+  if((m=/total estimated time\s*[:=]\s*([0-9dhms ]+)/i.exec(t)))r.sec=durToSec(m[1]);
+  else if((m=/estimated printing time(?:\s*\(normal mode\))?\s*[:=]\s*([0-9dhms ]+)/i.exec(t)))r.sec=durToSec(m[1]);
+  else if((m=/model printing time\s*[:=]\s*([0-9dhms ]+)/i.exec(t)))r.sec=durToSec(m[1]);
+  else if((m=/^;\s*TIME\s*:\s*(\d+)/mi.exec(t)))r.sec=+m[1];
+  else if((m=/;\s*PRINT\.TIME\s*:\s*(\d+)/i.exec(t)))r.sec=+m[1];
+  if((m=/total filament (?:used|weight)\s*\[g\]\s*[:=]\s*([\d.]+)/i.exec(t)))r.g=+m[1];
+  else if((m=/filament used\s*\[g\]\s*[:=]\s*([\d.,\s]+)/i.exec(t)))r.g=m[1].split(/[,\s]+/).reduce(function(a,b){return a+(parseFloat(b)||0);},0);
+  else if((m=/;\s*Filament used\s*:\s*([\d.]+)\s*m\b/i.exec(t)))r.meters=+m[1];
+  else if((m=/;\s*EXTRUDER_TRAIN\.0\.MATERIAL\.VOLUME_USED\s*:\s*([\d.]+)/i.exec(t)))r.meters=(+m[1])/2405;
+  return r;
+}
+// --- 3mf ---
+function attr(s,name){var m=new RegExp('\\b'+name+'="([^"]*)"').exec(s);return m?m[1]:null;}
+async function parse3mf(file){
+  var JSZip=await loadScript(JSZIP_URL,'JSZip');
+  var zip=await JSZip.loadAsync(file);
+  var r={};
+  var si=zip.file(/slice_info\.config$/i)[0];
+  if(si){
+    var x=await si.async('string'),sec=0,g=0,mm,re=/<metadata\b[^>]*>/g;
+    while((mm=re.exec(x))){var k=attr(mm[0],'key'),v=parseFloat(attr(mm[0],'value'));if(k==='prediction'&&v)sec+=v;if(k==='weight'&&v)g+=v;}
+    if(sec)r.sec=sec;if(g)r.g=g;
+    r.source=/Orca/i.test(x)?'OrcaSlicer':'Bambu Studio';
+  }
+  if(!r.sec&&!r.g){
+    var gc=zip.file(/\.gcode$/i);
+    if(gc.length){var gt=await gc[0].async('string');var p=parseGcode(gt.slice(0,600000)+'\n'+gt.slice(-600000));Object.assign(r,p);}
+  }
+  var pngs=zip.file(/Metadata\/plate_\d+\.png$/i);if(!pngs.length)pngs=zip.file(/Metadata\/thumbnail\.png$/i);
+  if(pngs.length)r.thumb='data:image/png;base64,'+(await pngs[0].async('base64'));
+  var models=zip.file(/\.model$/i),arr=[];
+  for(var i=0;i<models.length;i++){
+    var xml=await models[i].async('string'),mre=/<(?:\w+:)?mesh\b[\s\S]*?<\/(?:\w+:)?mesh>/g,mb;
+    while((mb=mre.exec(xml))){
+      var blk=mb[0],vs=[],vre=/<(?:\w+:)?vertex\b[^>]*>/g,tre=/<(?:\w+:)?triangle\b[^>]*>/g,v;
+      while((v=vre.exec(blk)))vs.push(+attr(v[0],'x'),+attr(v[0],'y'),+attr(v[0],'z'));
+      while((v=tre.exec(blk))){var a=+attr(v[0],'v1')*3,b=+attr(v[0],'v2')*3,c=+attr(v[0],'v3')*3;arr.push(vs[a],vs[a+1],vs[a+2],vs[b],vs[b+1],vs[b+2],vs[c],vs[c+1],vs[c+2]);}
+    }
+  }
+  if(arr.length)r.mesh=meshFrom(new Float32Array(arr));
+  return r;
+}
+// --- stl ---
+function parseSTL(buf){
+  var dv=new DataView(buf),pos=null;
+  if(buf.byteLength>=84){var n=dv.getUint32(80,true);
+    if(84+n*50===buf.byteLength){pos=new Float32Array(n*9);for(var t=0;t<n;t++){var o=84+t*50+12;for(var j=0;j<9;j++)pos[t*9+j]=dv.getFloat32(o+j*4,true);}}}
+  if(!pos){var txt=new TextDecoder().decode(buf),re=/vertex\s+([-+\d.eE]+)\s+([-+\d.eE]+)\s+([-+\d.eE]+)/g,arr=[],mm;
+    while((mm=re.exec(txt)))arr.push(+mm[1],+mm[2],+mm[3]);pos=new Float32Array(arr.slice(0,Math.floor(arr.length/9)*9));}
+  return pos.length?meshFrom(pos):null;
+}
+function meshFrom(pos){
+  var count=pos.length/9,vol=0,mn=[Infinity,Infinity,Infinity],mx=[-Infinity,-Infinity,-Infinity];
+  for(var i=0;i<count;i++){
+    var b=i*9,ax=pos[b],ay=pos[b+1],az=pos[b+2],bx=pos[b+3],by=pos[b+4],bz=pos[b+5],cx=pos[b+6],cy=pos[b+7],cz=pos[b+8];
+    vol+=ax*(by*cz-bz*cy)-ay*(bx*cz-bz*cx)+az*(bx*cy-by*cx);
+    for(var k=0;k<9;k++){var a=k%3,v=pos[b+k];if(v<mn[a])mn[a]=v;if(v>mx[a])mx[a]=v;}
+  }
+  return {positions:pos,count:count,volume:Math.abs(vol)/6/1000,dims:[mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2]]};
+}
+// --- viewer ---
+var three=null;
+function showModel(positions){
+  loadScript(THREE_URL,'THREE').then(function(THREE){
+    var v=$('viewer');
+    if(!three){
+      var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+      renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+      v.insertBefore(renderer.domElement,v.firstChild);
+      var scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,1,0.1,100000);
+      scene.add(new THREE.HemisphereLight(0xffffff,0x444444,0.9));
+      var dl=new THREE.DirectionalLight(0xffffff,0.7);dl.position.set(1,2,3);camera.add(dl);scene.add(camera);
+      var pivot=new THREE.Group();scene.add(pivot);
+      three={renderer:renderer,scene:scene,camera:camera,pivot:pivot,mesh:null,dist:100,rx:-0.9,ry:0.6};
+      three.draw=function(){var w=v.clientWidth,h=v.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+        camera.position.set(0,0,three.dist);camera.lookAt(0,0,0);pivot.rotation.set(three.rx,0,three.ry);renderer.render(scene,camera);};
+      var drag=null;
+      v.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('button'))return;drag={x:e.clientX,y:e.clientY};v.setPointerCapture(e.pointerId);v.style.cursor='grabbing';});
+      v.addEventListener('pointermove',function(e){if(!drag)return;three.ry+=(e.clientX-drag.x)*0.01;three.rx+=(e.clientY-drag.y)*0.01;drag={x:e.clientX,y:e.clientY};three.draw();});
+      v.addEventListener('pointerup',function(){drag=null;v.style.cursor='';});
+      v.addEventListener('wheel',function(e){e.preventDefault();three.dist*=e.deltaY>0?1.1:0.9;three.draw();},{passive:false});
+      if(window.ResizeObserver)new ResizeObserver(function(){three.draw();}).observe(v);
+    }
+    if(three.mesh){three.pivot.remove(three.mesh);three.mesh.geometry.dispose();}
+    var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(positions,3));
+    g.computeVertexNormals();g.computeBoundingBox();var c=new THREE.Vector3();g.boundingBox.getCenter(c);g.translate(-c.x,-c.y,-c.z);g.computeBoundingSphere();
+    var mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0xEA580C,roughness:0.55,metalness:0.05}));
+    three.pivot.add(mesh);three.mesh=mesh;three.dist=g.boundingSphere.radius*3.2;three.rx=-0.9;three.ry=0.6;three.draw();
+    if(thumbSrc!=='slicer')snapshot();
+  }).catch(function(){toast('No se pudo cargar la vista 3D; el cálculo funciona igual.');});
+}
+
+// ================= Google Apps Script =================
+async function api(action,payload){
+  var r=await fetch(gas.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:gas.key,action:action},payload||{}))});
+  var j;try{j=await r.json();}catch(e){throw {code:'respuesta'};}
+  if(!j.ok)throw {code:j.error||'error'};
+  return j;
+}
+function toB64(file){return file.arrayBuffer().then(function(buf){var u=new Uint8Array(buf),s='',CH=0x8000;for(var i=0;i<u.length;i+=CH)s+=String.fromCharCode.apply(null,u.subarray(i,i+CH));return btoa(s);});}
+async function uploadOne(p,prefix){
+  if(!gas||p.file.size>UP_MAX)return null;
+  var b64=await toB64(p.file);
+  var r=await api('upload',{name:prefix+' – '+p.file.name,mime:mimeOf(p.file),b64:b64});
+  return {name:p.file.name,kind:p.kind,size:p.file.size,where:'drive',driveId:r.id,url:r.url};
+}
+function calSummary(o){return (o.status==='Entregado'?'[Entregado] ':o.status==='Listo'?'[Listo] ':'')+'Entrega: '+o.client+' ('+(state.t.bizName||'Quirón 3D')+')';}
+function calDesc(o){
+  var t=oTotals(o),l=o.items.map(function(i){return iQty(i)+'× '+i.name+' — '+money(iLine(i));});
+  if(num(o.shipping))l.push('Envío/embalaje — '+money(o.shipping));
+  l.push('','Total: '+money(t.total),'Cobrado: '+money(t.paid),'Saldo: '+money(t.saldo));
+  if(o.contact)l.push('','Contacto: '+o.contact);
+  if(o.notes)l.push('','Notas: '+o.notes);
+  return l.join('\n');
+}
+function syncCal(){}
+function unsyncCal(){}
+
+// ================= quotes list =================
+function attLinks(atts){
+  if(!atts||!atts.length)return null;
+  var box=el('div',{class:'att'});
+  atts.forEach(function(f){
+    var vis=(f.kind==='image'&&f.where==='claude')?el('img',{src:f.url,alt:''}):el('span',{class:'tag',text:(ext(f.name)||'arch').toUpperCase().slice(0,4)});
+    box.appendChild(el('a',{href:f.url,target:'_blank',rel:'noopener',title:f.name+(f.where==='drive'?' (Google Drive)':'')},[vis,el('span',{text:f.name})]));
+  });
+  return box;
+}
+function renderList(){
+  var q=state.query.trim().toLowerCase();
+  var vis=state.list.filter(function(it){return !q||(it.name+' '+(it.material||'')).toLowerCase().indexOf(q)!==-1;});
+  $('empty').hidden=state.list.length>0;$('tw').hidden=state.list.length===0;$('repriceBtn').hidden=!state.list.length||!canWrite;
+  $('noMatch').hidden=!(state.list.length&&!vis.length);$('noMatch').textContent='Ninguna pieza coincide con «'+state.query+'».';
+  var tb=$('tbody');tb.innerHTML='';
+  vis.forEach(function(it){
+    var c=calc(it.form);
+    var sub=[it.date||''];if(c.pp>1)sub.push('placa de '+c.pp);if(it.printer&&state.printers.length>1)sub.push(it.printer);
+    if(it.slice)sub.push('del slicer');else if(it.stl&&it.stl.dims)sub.push(it.stl.dims.map(function(d){return Math.round(d);}).join('×')+' mm');
+    var cb=el('input',{type:'checkbox',class:'chk','aria-label':'Seleccionar '+it.name+' para un pedido'});cb.checked=!!state.sel[it.id];
+    cb.onchange=function(){if(cb.checked)state.sel[it.id]=true;else delete state.sel[it.id];renderSelCount();};
+    var acts=el('td',{class:'r',style:'padding:6px 8px;white-space:nowrap'});
+    if(canWrite){
+      var eb=iconBtn('','Editar '+it.name,'edit');eb.onclick=function(){editQuote(it,false);};
+      var du=iconBtn('','Duplicar '+it.name,'dup');du.onclick=function(){editQuote(it,true);};
+      var dbt=iconBtn('del','Eliminar '+it.name,'del');
+      dbt.onclick=function(){armConfirm(dbt,it.id,'Tocá de nuevo para eliminar «'+it.name+'». Los pedidos que la incluyen no cambian.',function(){deleteQuote(it);});};
+      acts.appendChild(eb);acts.appendChild(du);acts.appendChild(dbt);
+    }
+    tb.appendChild(el('tr',null,[el('td',null,[canWrite?cb:null]),
+      el('td',null,[el('div',{class:'pn'},[it.thumb?el('img',{class:'th',src:it.thumb,alt:''}):null,el('div',null,[el('div',{style:'font-weight:600',text:it.name}),el('div',{class:'hint',style:'font-size:12px',text:sub.join(' · ')}),attLinks(it.attachments)])])]),
+      el('td',{text:it.material||''}),
+      el('td',{class:'r mono',text:dec(c.grams,c.grams<10?1:0)+' g'}),el('td',{class:'r mono',text:fmtTime(c.hours)}),
+      el('td',{class:'r mono',style:'color:var(--muted)',text:money(c.cost)}),el('td',{class:'r mono',style:'font-weight:600',text:money(c.price)}),acts]));
+  });
+  Object.keys(state.sel).forEach(function(id){if(!state.list.some(function(x){return x.id===id;}))delete state.sel[id];});
+  renderSelCount();
+}
+$('q').addEventListener('input',function(e){state.query=e.target.value;renderList();});
+function pieceFrom(it){
+  var f=it.form||{};
+  var mat=state.mats.find(function(m){return m.id===it.materialId;})||state.mats.find(function(m){return (m.name||'').toLowerCase()===String(it.material||f.material||'').toLowerCase();});
+  var prn=state.printers.find(function(p){return p.id===it.printerId;});
+  return {name:it.name,materialId:mat?mat.id:(state.mats[0]&&state.mats[0].id),printerId:prn?prn.id:(state.printers[0]&&state.printers[0].id),
+    perPlate:f.perPlate&&num(f.perPlate)>1?f.perPlate:'',grams:f.grams||'',hours:f.hours||'',minutes:f.minutes||'',postMin:f.postMin||'',extras:f.extras||'',
+    marginPct:String(f.marginPct)===String(state.t.marginPct)?'':(f.marginPct||'')};
+}
+function editQuote(it,dup){
+  resetFiles();
+  state.q=pieceFrom(it);
+  if(dup){state.q.name=it.name+' (copia)';state.editingId=null;}else state.editingId=it.id;
+  thumb=it.thumb||null;thumbSrc='saved';renderThumb();fillQuote();renderResult();window.scrollTo({top:0,behavior:'smooth'});
+  if(dup){toast('Copia lista: cambiá lo que necesites y agregala a la lista.');setTimeout(function(){$('q-name').focus();$('q-name').select();},400);}
+}
+function deleteQuote(it){
+  delete state.sel[it.id];
+  if(state.editingId===it.id){state.editingId=null;newQuote();}
+  var prev=state.list.slice();state.list=state.list.filter(function(x){return x.id!==it.id;});if(!gas)saveLocal();renderList();
+  if(gas)api('deleteQuote',{id:it.id}).catch(function(){state.list=prev;renderList();toast('No se pudo eliminar en tu Google. Probá de nuevo.');});
+}
+var FORM_KEYS=['perPlate','grams','hours','minutes','postMin','extras','kgPrice','density','watts','kwh','printerCost','lifeHours','laborRate','failPct','marginPct','feePct','roundTo','minPrice'];
+function snapForm(f){var o={};FORM_KEYS.forEach(function(k){o[k]=String(f[k]==null?'':f[k]);});return o;}
+async function writeQuote(id,entry){
+  entry=Object.assign({},entry);delete entry.id;
+  if(gas){
+    var data=Object.assign({},entry);delete data.thumb;var c=calc(entry.form);
+    await api('saveQuote',{id:id,data:data,thumb:entry.thumb||'',summary:{perPlate:c.pp,grams:Math.round(c.grams*10)/10,hours:Math.round(c.hours*100)/100,cost:Math.round(c.cost),price:Math.round(c.price)}});
+  }
+  entry.id=id;var ex=state.list.some(function(x){return x.id===id;});
+  if(ex)state.list=state.list.map(function(x){return x.id===id?entry:x;});else state.list.unshift(entry);
+  if(!gas)saveLocal();renderList();
+}
+async function saveQuote(){
+  var btn=$('addBtn');if(btn.disabled)return null;
+  var f=flat(),name=String(state.q.name||'').trim()||'Pieza sin nombre',m=curMat(),p=curPrn();
+  var existing=state.editingId&&state.list.find(function(x){return x.id===state.editingId;});
+  var now=new Date(),date=existing?existing.date:now.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var attachments=(existing&&existing.attachments||[]).slice(),skipped=[];
+  btn.disabled=true;$('mAdd').disabled=true;
+  if(pending.length){
+    if(!gas)skipped=pending.map(function(x){return x.file.name;});
+    else for(var i=0;i<pending.length;i++){
+      var pf=pending[i];$('addLbl').textContent='Subiendo '+(i+1)+' de '+pending.length+'…';
+      try{var up=await uploadOne(pf,date.replace(/\//g,'-')+' '+name);if(up)attachments.push(up);else skipped.push(pf.file.name);}catch(e){skipped.push(pf.file.name);}
+    }
+  }
+  var entry={name:name,material:m?m.name:'',materialId:m?m.id:null,printer:p?p.name:'',printerId:p?p.id:null,form:snapForm(f),date:date,attachments:attachments,
+    stl:meshStats?{name:meshStats.name,volume:meshStats.volume,dims:meshStats.dims}:(existing&&existing.stl)||null,
+    slice:slice?{source:slice.source,sec:slice.sec,g:slice.g}:(existing&&existing.slice)||null,
+    thumb:thumb||null,
+    createdAt:existing?existing.createdAt:now.toISOString(),updatedAt:now.toISOString()};
+  var id=existing?existing.id:uid('q'),ok=true;
+  try{await writeQuote(id,entry);}
+  catch(e){ok=false;toast(e&&e.code==='quota_exceeded'?'Se llegó al máximo de registros. Eliminá cotizaciones viejas.':'No se pudo guardar. Probá de nuevo.');}
+  btn.disabled=false;$('mAdd').disabled=false;
+  if(!ok){renderResult();return null;}
+  entry.id=id;
+  state.editingId=null;newQuote();
+  toast(skipped.length?'Guardado, pero no se subieron: '+skipped.join(', ')+(gas?' (más de 15 MB o sin conexión).':' (conectá tu Google para guardar archivos).'):(existing?'Cambios guardados':'«'+name+'» agregado a la lista'),skipped.length?8000:4000);
+  if(existing){var c=calc(entry.form);var ch={};ch[id]={price:Math.round(c.price),cost:Math.round(c.cost),hours:c.hours,name:name};offerOrderUpdate(ch);}
+  return entry;
+}
+$('addBtn').addEventListener('click',function(){saveQuote();});
+$('mAdd').addEventListener('click',function(){saveQuote();});
+
+// --- impacto en pedidos ---
+async function offerOrderUpdate(changes){
+  var hits=[];
+  state.orders.filter(isActive).forEach(function(o){
+    var n=0;o.items.forEach(function(i){var c=changes[i.quoteId];if(c&&Math.round(num(i.priceUnit))!==c.price)n++;});
+    if(n)hits.push({o:o,n:n});
+  });
+  if(!hits.length)return;
+  var body=['Cambió el precio de piezas que están en pedidos en curso. Marcá en cuáles querés usar el precio nuevo:'];
+  var boxes=[];
+  hits.forEach(function(h){
+    var t0=oTotals(h.o),o2=clone(h.o);o2.items.forEach(function(i){var c=changes[i.quoteId];if(c){i.priceUnit=c.price;i.costUnit=c.cost;i.hoursUnit=Math.round(c.hours*1000)/1000;}});
+    var t1=oTotals(o2),cb=el('input',{type:'checkbox',class:'chk'});cb.checked=true;boxes.push({cb:cb,o:h.o,o2:o2});
+    body.push(el('label',{class:'swl'},[cb,el('span',null,[el('strong',{text:h.o.client}),' · '+h.n+(h.n===1?' pieza':' piezas')+' · total '+money(t0.total)+' → ',el('strong',{text:money(t1.total)})])]));
+  });
+  var ok=await ask('Actualizar pedidos',body,'Actualizar los marcados',{cancel:'Dejarlos como están'});
+  if(!ok)return;
+  var n=0;
+  for(var k=0;k<boxes.length;k++){if(!boxes[k].cb.checked)continue;var b=orderBody(boxes[k].o2);try{await writeOrder(boxes[k].o.id,b);syncCal(boxes[k].o.id,b);n++;}catch(e){}}
+  if(n)toast(n===1?'Pedido actualizado':n+' pedidos actualizados');
+}
+
+// --- actualizar precios ---
+function repriced(it){
+  var piece=pieceFrom(it);
+  var mat=state.mats.find(function(m){return m.id===piece.materialId;}),prn=state.printers.find(function(p){return p.id===piece.printerId;});
+  var f=Object.assign({},state.t,{watts:prn?prn.watts:'0',printerCost:prn?prn.printerCost:'0',lifeHours:prn?prn.lifeHours:'0'},{kgPrice:mat?mat.kgPrice:'',density:mat?mat.density:'1.24'},piece);
+  if(String(piece.marginPct).trim()==='')f.marginPct=(it.form&&it.form.marginPct)||state.t.marginPct;
+  return {form:snapForm(f),mat:mat,prn:prn};
+}
+$('repriceBtn').onclick=async function(){
+  var rows=[],tb=el('tbody');
+  state.list.forEach(function(it){
+    var r=repriced(it),a=calc(it.form).price,b=calc(r.form).price;
+    if(Math.round(a)===Math.round(b))return;
+    var cb=el('input',{type:'checkbox',class:'chk','aria-label':'Actualizar '+it.name});cb.checked=true;
+    var pct=a?Math.round((b-a)/a*100):0;
+    rows.push({it:it,r:r,cb:cb});
+    tb.appendChild(el('tr',null,[el('td',null,[cb]),el('td',{text:it.name}),el('td',{class:'r mono',text:money(a)}),el('td',{class:'r mono',style:'font-weight:600',text:money(b)}),el('td',{class:'r mono '+(pct>0?'up':'down'),text:(pct>0?'+':'')+pct+'%'})]));
+  });
+  if(!rows.length){toast('Todos los precios ya están al día con tu taller.');return;}
+  var table=el('div',{class:'tw'},[el('table',{style:'min-width:420px'},[el('thead',null,[el('tr',null,[el('th',null,[el('span',{class:'sr',text:'Actualizar'})]),el('th',{text:'Pieza'}),el('th',{class:'r',text:'Antes'}),el('th',{class:'r',text:'Ahora'}),el('th',{class:'r',text:'Cambio'})])]),tb])]);
+  var ok=await ask('Actualizar precios',['Recalculé cada pieza con los valores actuales de Mi taller (materiales, impresoras, luz, tu hora, comisión, mínimo y redondeo). La ganancia de cada pieza se mantiene. Las que ya estaban al día no aparecen.',table],'Actualizar las marcadas');
+  if(!ok)return;
+  var changes={},n=0;
+  for(var i=0;i<rows.length;i++){
+    var x=rows[i];if(!x.cb.checked)continue;
+    var e=Object.assign({},x.it,{form:x.r.form,material:x.r.mat?x.r.mat.name:x.it.material,printer:x.r.prn?x.r.prn.name:x.it.printer,updatedAt:new Date().toISOString()});delete e.id;
+    try{await writeQuote(x.it.id,e);n++;var c=calc(x.r.form);changes[x.it.id]={price:Math.round(c.price),cost:Math.round(c.cost),hours:c.hours,name:x.it.name};}catch(err){}
+  }
+  toast(n+(n===1?' precio actualizado':' precios actualizados'));
+  offerOrderUpdate(changes);
+};
+
+// ================= orders =================
+function qThumb(id){var q=id&&state.list.find(function(x){return x.id===id;});return q&&q.thumb||null;}
+function selectedQuotes(){return state.list.filter(function(x){return state.sel[x.id];});}
+function renderSelCount(){
+  var n=selectedQuotes().length;
+  $('mkOrder').disabled=!n||!canWrite;$('mkOrder').textContent=n?'Crear pedido ('+n+')':'Crear pedido';
+  $('oAddSel').disabled=!n;$('oAddSel').textContent=n?'Agregar las marcadas en la lista ('+n+')':'Agregar las marcadas en la lista';
+}
+function itemFromQuote(it){var c=calc(it.form);return {quoteId:it.id,name:it.name,material:it.material||'',priceUnit:Math.round(c.price),costUnit:Math.round(c.cost),hoursUnit:Math.round(c.hours*1000)/1000,qty:1,discPct:0};}
+function iQty(i){return Math.max(1,Math.round(num(i.qty))||1);}
+function iLine(i){return num(i.priceUnit)*iQty(i)*(1-num(i.discPct)/100);}
+function iCostU(i){var c=num(i.costUnit);if(!c){var q=state.list.find(function(x){return x.id===i.quoteId;});if(q)c=calc(q.form).cost;}return c;}
+function payments(o){var p=Array.isArray(o.payments)?o.payments.slice():[];if(!p.length&&num(o.deposit))p.push({date:(o.createdAt||'').slice(0,10),amount:num(o.deposit),note:'Seña'});return p;}
+function oTotals(o){
+  var it=0,h=0,cost=0,units=0;(o.items||[]).forEach(function(i){it+=iLine(i);h+=num(i.hoursUnit)*iQty(i);cost+=iCostU(i)*iQty(i);units+=iQty(i);});
+  var ship=num(o.shipping),total=Math.round(it)+ship,paid=payments(o).reduce(function(a,p){return a+num(p.amount);},0);
+  return {items:Math.round(it),ship:ship,total:total,hours:h,paid:paid,saldo:Math.max(0,total-paid),cost:cost,units:units};
+}
+function suggestDue(hours){
+  var hpd=num(state.t.hoursPerDay)||10,days=Math.ceil(hours/hpd)+Math.round(num(state.t.bufferDays));
+  var d=new Date();d.setHours(0,0,0,0);
+  while(days>0){d.setDate(d.getDate()+1);if(d.getDay()!==0)days--;}
+  return iso(d);
+}
+function daysLeft(s){var d=parseIso(s);if(!d)return null;var t=new Date();t.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
+function isActive(o){return o.status!=='Entregado'&&o.status!=='Cancelado';}
+function clients(){
+  var map={};state.orders.slice().sort(function(a,b){return (a.createdAt||'').localeCompare(b.createdAt||'');}).forEach(function(o){var k=(o.client||'').trim();if(!k)return;var key=k.toLowerCase();map[key]={name:k,contact:o.contact||(map[key]&&map[key].contact)||''};});
+  return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return a.name.localeCompare(b.name);});
+}
+function renderClientsDL(){var dl=$('clientsDL');dl.innerHTML='';clients().forEach(function(c){dl.appendChild(el('option',{value:c.name}));});}
+
+function openOrder(o,items){
+  if(o){oDraft=clone(o);oDraft.payments=payments(o);}
+  else{
+    oDraft={client:'',contact:'',status:'Presupuesto',shipping:'',payments:[],notes:'',items:items||selectedQuotes().map(itemFromQuote),due:''};
+    oDraft.items.forEach(function(i){i.discPct=discFor(iQty(i));});
+    oDraft.due=suggestDue(oTotals(oDraft).hours);
+  }
+  $('ofTitle').textContent=o?'Editar pedido de '+o.client:'Nuevo pedido';
+  $('o-client').value=oDraft.client||'';$('o-contact').value=oDraft.contact||'';$('o-due').value=oDraft.due||'';
+  $('o-status').value=oDraft.status||'Presupuesto';$('o-ship').value=oDraft.shipping||'';$('o-notes').value=oDraft.notes||'';
+  $('o-err').hidden=true;$('oform').hidden=false;renderClientsDL();renderOrderForm();renderPays();
+  $('oform').scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(function(){$('o-client').focus({preventScroll:true});},350);
+}
+function closeOrder(){oDraft=null;$('oform').hidden=true;}
+function renderOrderForm(){
+  if(!oDraft)return;
+  var tb=$('o-items');tb.innerHTML='';
+  if(!oDraft.items.length)tb.appendChild(el('tr',null,[el('td',{colspan:'5',class:'hint',text:'Sin piezas. Marcalas en la lista de precios y tocá «Agregar las marcadas».'})]));
+  oDraft.items.forEach(function(i,idx){
+    var q=el('input',{type:'number',min:'1',step:'1',inputmode:'numeric',class:'qty','aria-label':'Cantidad de '+i.name});q.value=i.qty;
+    var sub=el('td',{class:'r mono'}),dz=el('div',{class:'disc'});
+    function upd(){sub.textContent=money(iLine(i));dz.textContent=num(i.discPct)?'−'+num(i.discPct)+'% por cantidad':'';}
+    q.oninput=function(){i.qty=q.value;i.discPct=discFor(iQty(i));upd();renderOrderTotals();};
+    upd();
+    var rm=iconBtn('del','Quitar '+i.name,'del');rm.onclick=function(){oDraft.items.splice(idx,1);renderOrderForm();};
+    var qt=qThumb(i.quoteId);
+    tb.appendChild(el('tr',null,[el('td',null,[el('div',{class:'pn'},[qt?el('img',{class:'th sm',src:qt,alt:''}):null,el('div',null,[el('div',{style:'font-weight:600',text:i.name}),el('div',{class:'hint',style:'font-size:12px',text:i.material})])])]),
+      el('td',{class:'r mono',text:money(i.priceUnit)}),el('td',{class:'r'},[q,dz]),sub,el('td',{class:'r'},[rm])]));
+  });
+  renderOrderTotals();
+}
+function renderPays(){
+  var box=$('o-pays');box.innerHTML='';
+  if(!oDraft.payments.length)box.appendChild(el('p',{class:'hint',text:'Sin pagos todavía.'}));
+  oDraft.payments.forEach(function(p,idx){
+    var a=el('input',{type:'number',step:'any',min:'0',inputmode:'decimal','aria-label':'Monto del pago '+(idx+1)});a.value=p.amount||'';
+    var d=el('input',{type:'date','aria-label':'Fecha del pago '+(idx+1)});d.value=p.date||today();
+    var n=el('input',{type:'text',placeholder:'Seña, transferencia…','aria-label':'Nota del pago '+(idx+1)});n.value=p.note||'';
+    a.oninput=function(){p.amount=a.value;renderOrderTotals();};d.oninput=function(){p.date=d.value;};n.oninput=function(){p.note=n.value;};
+    var rm=iconBtn('del','Quitar pago '+(idx+1),'del');rm.onclick=function(){oDraft.payments.splice(idx,1);renderPays();renderOrderTotals();};
+    box.appendChild(el('div',{class:'payrow'},[el('div',{class:'box'},[a,el('span',{text:'$'})]),el('div',{class:'box'},[d]),el('div',{class:'box pnote'},[n]),rm]));
+  });
+}
+$('o-addPay').onclick=function(){if(!oDraft)return;var t=oTotals(oDraft);oDraft.payments.push({date:today(),amount:t.saldo?String(Math.round(t.saldo)):'',note:oDraft.payments.length?'':'Seña'});renderPays();renderOrderTotals();var ins=$('o-pays').querySelectorAll('.payrow:last-child input');if(ins[0])ins[0].focus();};
+function renderOrderTotals(){
+  var t=oTotals(oDraft),s=suggestDue(t.hours);
+  $('o-total').textContent=money(t.total);$('o-paid').textContent=money(t.paid);$('o-saldo').textContent=money(t.saldo);
+  var box=$('o-sugg');box.innerHTML='';
+  box.appendChild(el('span',null,['Impresión total ',el('b',{class:'mono',text:fmtTime(t.hours)}),' · entrega sugerida ',el('b',{text:fmtDate(s)})]));
+  $('o-useSugg').onclick=function(){oDraft.due=s;$('o-due').value=s;};
+}
+[['o-client','client'],['o-contact','contact'],['o-due','due'],['o-status','status'],['o-ship','shipping'],['o-notes','notes']].forEach(function(p){
+  $(p[0]).addEventListener('input',function(){if(!oDraft)return;oDraft[p[1]]=$(p[0]).value;if(p[1]==='shipping')renderOrderTotals();if(p[1]==='client')$('o-err').hidden=true;});
+});
+$('o-client').addEventListener('change',function(){
+  if(!oDraft)return;var c=clients().find(function(x){return x.name.toLowerCase()===$('o-client').value.trim().toLowerCase();});
+  if(c&&c.contact&&!$('o-contact').value){$('o-contact').value=c.contact;oDraft.contact=c.contact;}
+});
+STATUSES.forEach(function(s){$('o-status').appendChild(el('option',{value:s,text:s}));});
+$('mkOrder').onclick=function(){openOrder(null);};
+$('newOrder').onclick=function(){openOrder(null);};
+$('oCancel').onclick=closeOrder;
+$('oAddSel').onclick=function(){
+  if(!oDraft)return;
+  selectedQuotes().forEach(function(q){if(!oDraft.items.some(function(i){return i.quoteId===q.id;}))oDraft.items.push(itemFromQuote(q));});
+  state.sel={};renderList();renderOrderForm();
+};
+function orderBody(d){
+  var b={client:String(d.client||'').trim(),contact:d.contact||'',due:d.due||'',status:d.status||'Presupuesto',shipping:String(d.shipping||''),notes:d.notes||'',
+    payments:payments(d).filter(function(p){return num(p.amount);}).map(function(p){return {date:p.date||today(),amount:num(p.amount),note:p.note||''};}),
+    items:(d.items||[]).map(function(i){return {quoteId:i.quoteId||null,name:i.name,material:i.material||'',priceUnit:num(i.priceUnit),costUnit:Math.round(iCostU(i)),hoursUnit:num(i.hoursUnit),qty:iQty(i),discPct:num(i.discPct)};}),
+    feePct:d.feePct!=null?num(d.feePct):num(state.t.feePct),
+    calEventId:d.calEventId||null,deliveredAt:d.status==='Entregado'?(d.deliveredAt||today()):null,
+    createdAt:d.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  return b;
+}
+async function writeOrder(id,body){
+  body=Object.assign({},body);delete body.id;
+  if(gas){
+    var t=oTotals(body);
+    var r=await api('saveOrder',{id:id,data:body,summary:{total:t.total,paid:t.paid,saldo:t.saldo,itemsText:body.items.map(function(i){return iQty(i)+'× '+i.name;}).join('\n')},
+      calOn:state.t.calOn==='1',calTitle:calSummary(body),calDesc:calDesc(body)});
+    body.calEventId=r.calEventId||null;
+  }
+  body.id=id;state.orders=state.orders.filter(function(o){return o.id!==id;});state.orders.push(body);if(!gas)saveLocal();renderOrders();
+}
+$('oSave').onclick=async function(){
+  if(!oDraft)return;var err=$('o-err');
+  if(!String(oDraft.client||'').trim()){err.textContent='Poné el nombre del cliente.';err.hidden=false;$('o-client').focus();return;}
+  if(!oDraft.items.length){err.textContent='Agregá al menos una pieza de la lista.';err.hidden=false;return;}
+  var btn=$('oSave');btn.disabled=true;
+  try{var id=oDraft.id||uid('o'),body=orderBody(oDraft);await writeOrder(id,body);state.sel={};renderList();closeOrder();toast('Pedido de '+body.client+' guardado');syncCal(id,body);}
+  catch(e){err.textContent=e&&e.code==='quota_exceeded'?'Se llegó al máximo de registros. Eliminá pedidos viejos.':'No se pudo guardar el pedido. Probá de nuevo.';err.hidden=false;}
+  btn.disabled=false;
+};
+Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(b){b.onclick=function(){setFilter(b.getAttribute('data-f'));};});
+function setFilter(f){state.ofilter=f;Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(x){x.setAttribute('aria-pressed',String(x.getAttribute('data-f')===f));});renderOrders();}
+$('oq').addEventListener('input',function(){state.oquery=$('oq').value;renderOrders();});
+
+function renderStats(){
+  var act=state.orders.filter(isActive),cobrar=0,week=0,late=0,queue=0;
+  state.orders.forEach(function(o){if(o.status!=='Cancelado')cobrar+=oTotals(o).saldo;});
+  act.forEach(function(o){var t=oTotals(o),dl=daysLeft(o.due);if(dl!=null&&dl<0)late++;else if(dl!=null&&dl<=7)week++;if(o.status==='Confirmado'||o.status==='En producción')queue+=t.hours;});
+  var s=$('stats');s.innerHTML='';s.hidden=!state.orders.length;
+  [['Por cobrar',money(cobrar),''],['Vencen esta semana',String(week),''],['Atrasados',String(late),late?'alert':''],['Impresión en cola',fmtTime(queue),'']].forEach(function(x){
+    s.appendChild(el('div',{class:'stat'},[el('div',{class:'hint',text:x[0]}),el('div',{class:'v '+x[2],text:x[1]})]));
+  });
+}
+async function setStatus(o,status){
+  try{await writeOrder(o.id,orderBody(Object.assign({},o,{status:status})));}catch(e){toast('No se pudo cambiar el estado.');renderOrders();}
+}
+function payDialog(o){
+  var t=oTotals(o);
+  var a=el('input',{id:'pd-a',type:'number',step:'any',min:'0',inputmode:'decimal'});a.value=t.saldo?String(Math.round(t.saldo)):'';
+  var d=el('input',{id:'pd-d',type:'date'});d.value=today();
+  var n=el('input',{id:'pd-n',type:'text',placeholder:'Transferencia, efectivo…'});
+  var g=el('div',{class:'grid'},[
+    el('div',{class:'f'},[el('label',{for:'pd-a',text:'Monto'}),el('div',{class:'box'},[a,el('span',{text:'$'})])]),
+    el('div',{class:'f'},[el('label',{for:'pd-d',text:'Fecha'}),el('div',{class:'box'},[d])]),
+    el('div',{class:'f wide'},[el('label',{for:'pd-n',text:'Nota'}),el('div',{class:'box'},[n])])]);
+  var p=ask('Registrar pago de '+o.client,['Saldo actual: '+money(t.saldo),g],'Registrar pago',{validate:function(){if(!num(a.value)){$('genErr').textContent='Poné el monto.';$('genErr').hidden=false;a.focus();return false;}return true;}});
+  setTimeout(function(){a.focus();a.select();},50);
+  p.then(async function(ok){
+    if(!ok)return;
+    var b=orderBody(Object.assign({},o,{payments:payments(o).concat([{date:d.value||today(),amount:num(a.value),note:n.value}])}));
+    try{await writeOrder(o.id,b);toast('Pago de '+money(num(a.value))+' registrado');syncCal(o.id,b);}catch(e){toast('No se pudo registrar el pago.');}
+  });
+}
+function renderOrders(){
+  renderStats();renderMonth();
+  var f=state.ofilter,cq=state.oquery.trim().toLowerCase();
+  var vis=state.orders.filter(function(o){var a=isActive(o);return (f==='all'||(f==='done'?!a:a))&&(!cq||(o.client||'').toLowerCase().indexOf(cq)!==-1);});
+  vis.sort(function(a,b){return f==='done'?(b.due||'').localeCompare(a.due||''):(a.due||'9999').localeCompare(b.due||'9999');});
+  var cf=$('clientFilter');
+  if(cq){var all=state.orders.filter(function(o){return (o.client||'').toLowerCase().indexOf(cq)!==-1&&o.status!=='Cancelado';}),tot=all.reduce(function(a,o){return a+oTotals(o).total;},0);
+    cf.hidden=false;cf.textContent=all.length+(all.length===1?' pedido':' pedidos')+' de «'+state.oquery.trim()+'» en total, por '+money(tot)+'.';}
+  else cf.hidden=true;
+  $('ordersEmpty').hidden=vis.length>0;
+  $('ordersEmpty').querySelector('strong').textContent=state.orders.length?'No hay pedidos con este filtro':'No hay pedidos';
+  var g=$('orders');g.innerHTML='';
+  vis.forEach(function(o){
+    var t=oTotals(o),dl=daysLeft(o.due),active=isActive(o);
+    var dueTxt='Entrega: '+fmtDate(o.due);
+    if(dl!=null&&active)dueTxt+=dl<0?' · atrasado '+(-dl)+(dl===-1?' día':' días'):dl===0?' · hoy':dl===1?' · mañana':' · en '+dl+' días';
+    var st=el('select',{class:'sel','aria-label':'Estado del pedido de '+o.client});
+    STATUSES.forEach(function(s){st.appendChild(el('option',{value:s,text:s}));});st.value=o.status||'Presupuesto';st.disabled=!canWrite;
+    st.onchange=function(){setStatus(o,st.value);};
+    var ul=el('ul');
+    o.items.forEach(function(i){var qt=qThumb(i.quoteId);ul.appendChild(el('li',null,[el('span',{class:'pn',style:'align-items:center'},[qt?el('img',{class:'th sm',src:qt,alt:''}):null,el('span',{text:iQty(i)+'× '+i.name+(num(i.discPct)?' (−'+num(i.discPct)+'%)':'')})]),el('span',{class:'mono',text:money(iLine(i))})]));});
+    if(t.ship)ul.appendChild(el('li',null,[el('span',{text:'Envío / embalaje'}),el('span',{class:'mono',text:money(t.ship)})]));
+    var cl=el('button',{type:'button',class:'cl',text:o.client,title:'Ver todos los pedidos de '+o.client});
+    cl.onclick=function(){state.oquery=o.client;$('oq').value=o.client;setFilter('all');};
+    var left=el('div',{class:'l'});
+    var mb=txtBtn('Presupuesto','msg');mb.onclick=function(){openMsg(o);};left.appendChild(mb);
+    if(canWrite&&t.saldo>0&&o.status!=='Cancelado'){var pb=txtBtn('Pago','pay');pb.onclick=function(){payDialog(o);};left.appendChild(pb);}
+    var right=el('div',{style:'display:flex;gap:2px'});
+    if(canWrite){
+      var eb=iconBtn('','Editar pedido de '+o.client,'edit');eb.onclick=function(){openOrder(o);};
+      var db_=iconBtn('del','Eliminar pedido de '+o.client,'del');
+      db_.onclick=function(){armConfirm(db_,o.id,'Tocá de nuevo para eliminar el pedido de '+o.client,function(){
+        unsyncCal(o);
+        var prev=state.orders.slice();state.orders=state.orders.filter(function(x){return x.id!==o.id;});if(!gas)saveLocal();renderOrders();
+        if(gas)api('deleteOrder',{id:o.id}).catch(function(){state.orders=prev;renderOrders();toast('No se pudo eliminar en tu Google.');});});};
+      right.appendChild(eb);right.appendChild(db_);
+    }
+    g.appendChild(el('article',{class:'ocard','aria-label':'Pedido de '+o.client},[
+      el('div',{class:'top'},[el('div',null,[cl,o.contact?el('div',{class:'meta',text:o.contact}):null]),st]),
+      el('div',{class:'due'+(active&&dl!=null?(dl<0?' late':dl<=2?' soon':''):'')},[dueTxt,o.calEventId?el('span',{class:'cal',text:'· en tu Calendar'}):null]),
+      ul,o.notes?el('div',{class:'meta',style:'white-space:pre-line',text:o.notes}):null,
+      el('div',{class:'money mono'},[el('span',null,['Total',el('b',{text:money(t.total)})]),el('span',null,['Cobrado',el('b',{text:money(t.paid)})]),el('span',null,['Saldo',el('b',{text:money(t.saldo)})])]),
+      el('div',{class:'acts'},[left,right])
+    ]));
+  });
+}
+
+// --- add current quote to an order ---
+$('toOrderBtn').onclick=function(){
+  var list=$('toOrderList');list.innerHTML='';
+  var nb=el('button',{type:'button'},[el('strong',{text:'+ Nuevo pedido con esta pieza'})]);
+  nb.onclick=async function(){$('toOrderDlg').close();var e=await saveQuote();if(e)openOrder(null,[itemFromQuote(e)]);};
+  list.appendChild(nb);
+  state.orders.filter(isActive).sort(function(a,b){return (a.due||'9999').localeCompare(b.due||'9999');}).forEach(function(o){
+    var b=el('button',{type:'button'},[el('span',null,[el('strong',{text:o.client}),el('br'),el('span',{class:'hint',text:o.items.length+(o.items.length===1?' pieza':' piezas')+' · '+o.status})]),el('span',{class:'hint',text:fmtDate(o.due)})]);
+    b.onclick=async function(){
+      $('toOrderDlg').close();var e=await saveQuote();if(!e)return;
+      var it=itemFromQuote(e);it.discPct=discFor(1);
+      var body=orderBody(Object.assign({},o,{items:o.items.concat([it])}));
+      try{await writeOrder(o.id,body);toast('«'+e.name+'» sumado al pedido de '+o.client);syncCal(o.id,body);}catch(err){toast('Se guardó en la lista, pero no se pudo sumar al pedido.');}
+    };
+    list.appendChild(b);
+  });
+  if(!state.orders.some(isActive))list.appendChild(el('p',{class:'hint',text:'No tenés pedidos en curso.'}));
+  $('toOrderDlg').showModal();
+};
+
+// --- presupuesto ---
+function buildMsg(o){
+  var t=oTotals(o),biz=(state.t.bizName||'').trim();
+  var lines=['¡Hola '+o.client.split(' ')[0]+'! Te paso el detalle de tu pedido'+(biz?' en '+biz:'')+':',''];
+  o.items.forEach(function(i){lines.push('• '+iQty(i)+'× '+i.name+(i.material?' ('+i.material+')':'')+' — '+money(iLine(i))+(num(i.discPct)?' (con '+num(i.discPct)+'% de descuento)':''));});
+  if(t.ship)lines.push('• Envío / embalaje — '+money(t.ship));
+  lines.push('','*Total: '+money(t.total)+'*');
+  if(t.paid)lines.push('Ya abonado: '+money(t.paid),'Saldo: '+money(t.saldo));
+  if(o.due)lines.push('','Entrega estimada: '+fmtDate(o.due,true)+'.');
+  lines.push('','¡Gracias!');
+  return lines.join('\n');
+}
+function loadImg(src){return new Promise(function(res){if(!src)return res(null);var i=new Image();i.onload=function(){res(i);};i.onerror=function(){res(null);};i.src=src;});}
+function rr(x,X,Y,W,H,R){x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+W,Y,X+W,Y+H,R);x.arcTo(X+W,Y+H,X,Y+H,R);x.arcTo(X,Y+H,X,Y,R);x.arcTo(X,Y,X+W,Y,R);x.closePath();}
+function fit(x,s,w){if(x.measureText(s).width<=w)return s;while(s.length>1&&x.measureText(s+'…').width>w)s=s.slice(0,-1);return s+'…';}
+async function drawBudget(o){
+  try{if(document.fonts&&document.fonts.load){await Promise.all([document.fonts.load('700 40px "IBM Plex Sans"'),document.fonts.load('400 24px "IBM Plex Sans"'),document.fonts.load('600 28px "IBM Plex Mono"')]);}}catch(e){}
+  var t=oTotals(o),imgs=await Promise.all(o.items.map(function(i){return loadImg(qThumb(i.quoteId));}));
+  var W=1080,P=64,ROW=132,head=220,itemsH=o.items.length*ROW+(t.ship?70:0),totH=150+(t.paid?96:0)+(o.due?84:0),H=head+56+itemsH+totH+130;
+  var c=document.createElement('canvas');c.width=W;c.height=H;var x=c.getContext('2d');
+  var SANS='"IBM Plex Sans",system-ui,sans-serif',MONO='"IBM Plex Mono",ui-monospace,monospace';
+  x.fillStyle='#FFFFFF';x.fillRect(0,0,W,H);
+  x.fillStyle='#15171C';x.fillRect(0,0,W,head);
+  x.fillStyle='#F97316';x.font='600 22px '+MONO;x.fillText('PRESUPUESTO',P,74);
+  x.fillStyle='#FFFFFF';x.font='700 52px '+SANS;x.fillText(fit(x,state.t.bizName||'Quirón 3D',W-2*P),P,138);
+  x.fillStyle='#B7BCC6';x.font='400 26px '+SANS;x.fillText(fit(x,'Para '+o.client+' · '+new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}),W-2*P),P,184);
+  var y=head+40;
+  o.items.forEach(function(i,k){
+    var im=imgs[k],tw=128,th=96,ty=y+(ROW-th)/2-10;
+    x.save();rr(x,P,ty,tw,th,12);x.clip();x.fillStyle='#EEF0F3';x.fillRect(P,ty,tw,th);
+    if(im){var s=Math.max(tw/im.width,th/im.height),w=im.width*s,h=im.height*s;x.drawImage(im,P+(tw-w)/2,ty+(th-h)/2,w,h);}
+    x.restore();
+    var tx=P+tw+28,right=W-P;
+    x.fillStyle='#15171C';x.font='600 30px '+SANS;x.fillText(fit(x,i.name,right-tx-240),tx,ty+38);
+    x.fillStyle='#5B616E';x.font='400 24px '+SANS;
+    x.fillText(fit(x,iQty(i)+' × '+money(i.priceUnit)+(i.material?' · '+i.material:'')+(num(i.discPct)?' · −'+num(i.discPct)+'%':''),right-tx-240),tx,ty+78);
+    x.fillStyle='#15171C';x.font='600 30px '+MONO;x.textAlign='right';x.fillText(money(iLine(i)),right,ty+56);x.textAlign='left';
+    y+=ROW;x.fillStyle='#E2E4E9';x.fillRect(P,y-8,W-2*P,2);
+  });
+  if(t.ship){x.fillStyle='#3A3F4A';x.font='400 26px '+SANS;x.fillText('Envío / embalaje',P,y+38);x.font='600 28px '+MONO;x.textAlign='right';x.fillText(money(t.ship),W-P,y+38);x.textAlign='left';y+=70;}
+  y+=20;rr(x,P,y,W-2*P,120,16);x.fillStyle='#FFF1E8';x.fill();
+  x.fillStyle='#9A3412';x.font='600 28px '+SANS;x.fillText('Total',P+32,y+72);
+  x.font='700 52px '+MONO;x.textAlign='right';x.fillText(money(t.total),W-P-32,y+80);x.textAlign='left';y+=150;
+  if(t.paid){x.fillStyle='#3A3F4A';x.font='400 26px '+SANS;x.fillText('Abonado',P,y+10);x.fillText('Saldo',P,y+56);
+    x.font='600 28px '+MONO;x.textAlign='right';x.fillText(money(t.paid),W-P,y+10);x.fillText(money(t.saldo),W-P,y+56);x.textAlign='left';y+=96;}
+  if(o.due){x.fillStyle='#15171C';x.font='600 28px '+SANS;var dt='Entrega estimada: '+fmtDate(o.due,true);x.fillText(fit(x,dt,W-2*P),P,y+30);y+=84;}
+  x.fillStyle='#E2E4E9';x.fillRect(0,H-90,W,1);
+  x.fillStyle='#5B616E';x.font='400 24px '+SANS;x.fillText(fit(x,'¡Gracias por tu pedido!'+(state.t.bizContact?' · '+state.t.bizContact:''),W-2*P),P,H-38);
+  return c.toDataURL('image/png');
+}
+var msgOrder=null,budgetUrl=null;
+function waHref(){var d=(msgOrder&&msgOrder.contact||'').replace(/\D/g,'');return 'https://wa.me/'+(d.length>=8?d:'')+'?text='+encodeURIComponent($('msgText').value);}
+function slug(s){return (s||'archivo').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'').toLowerCase();}
+function saveDataUrl(url,name){
+  return fetch(url).then(function(r){return r.blob();}).then(function(b){
+    if(downloads)return downloads.save({filename:name,data:b});
+    var a=document.createElement('a');a.href=url;a.download=name;a.click();
+  }).catch(function(){toast('No se pudo descargar.');});
+}
+async function openMsg(o){
+  msgOrder=o;$('msgText').value=buildMsg(o);budgetUrl=null;
+  var d=(o.contact||'').replace(/\D/g,'');
+  $('msgHint').textContent=(d.length>=8?'Se abre el chat con '+o.contact+'. Si no lo encuentra, agregale el código de país al contacto (54 9 …).':'No hay un número en el contacto: WhatsApp te va a pedir que elijas el chat.')+' Adjuntá la imagen del presupuesto en el chat.';
+  $('msgWa').href=waHref();
+  var imgs=o.items.filter(function(i){return qThumb(i.quoteId);});
+  $('msgDl').hidden=!imgs.length;
+  $('msgDl').onclick=function(){imgs.forEach(function(i){saveDataUrl(qThumb(i.quoteId),slug(i.name)+'.jpg');});};
+  $('budgetImg').removeAttribute('src');$('budgetImg').alt='Generando presupuesto…';
+  $('msgDlg').showModal();
+  budgetUrl=await drawBudget(o);$('budgetImg').src=budgetUrl;$('budgetImg').alt='Presupuesto para '+o.client+' con las piezas, precios, total y fecha de entrega';
+}
+$('budgetDl').onclick=function(){if(budgetUrl&&msgOrder)saveDataUrl(budgetUrl,'presupuesto-'+slug(msgOrder.client)+'.png');};
+$('msgText').addEventListener('input',function(){$('msgWa').href=waHref();});
+$('msgCopy').onclick=function(){
+  var t=$('msgText').value;
+  try{navigator.clipboard.writeText(t).then(function(){$('msgCopy').textContent='Copiado';setTimeout(function(){$('msgCopy').textContent='Copiar mensaje';},1800);},function(){$('msgText').select();});}catch(e){$('msgText').select();}
+};
+
+// ================= resumen del mes =================
+function monthKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function oMonth(o){return (o.deliveredAt||o.due||o.createdAt||'').slice(0,7);}
+function renderMonth(){
+  if(!state.month)state.month=monthKey(new Date());
+  var mk=state.month,p=mk.split('-');
+  var ml=new Date(+p[0],+p[1]-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'});$('mLabel').textContent=ml.charAt(0).toUpperCase()+ml.slice(1);
+  var os=state.orders.filter(function(o){return o.status!=='Cancelado'&&oMonth(o)===mk;});
+  var sales=0,cost=0,fees=0,units=0,pieces={},cls={},cobr=0;
+  os.forEach(function(o){var t=oTotals(o);sales+=t.items;cost+=t.cost;units+=t.units;fees+=t.items*num(o.feePct)/100;
+    o.items.forEach(function(i){var k=i.name;pieces[k]=pieces[k]||{u:0,v:0};pieces[k].u+=iQty(i);pieces[k].v+=iLine(i);});
+    var ck=(o.client||'').trim()||'Sin nombre';cls[ck]=(cls[ck]||0)+t.total;});
+  state.orders.forEach(function(o){if(o.status==='Cancelado')return;payments(o).forEach(function(pp){if((pp.date||'').slice(0,7)===mk)cobr+=num(pp.amount);});});
+  var gain=sales-cost-fees;
+  var s=$('mStats');s.innerHTML='';
+  [['Ventas',money(sales),''],['Costo de producción',money(cost),''],['Comisiones',money(fees),''],['Ganancia',money(gain),gain>0?'good':gain<0?'alert':''],['Cobrado en el mes',money(cobr),''],['Pedidos · piezas',os.length+' · '+units,'']].forEach(function(x){
+    s.appendChild(el('div',{class:'stat'},[el('div',{class:'hint',text:x[0]}),el('div',{class:'v '+x[2],text:x[1]})]));
+  });
+  var tp=$('mTopP');tp.innerHTML='';
+  Object.keys(pieces).map(function(k){return [k,pieces[k]];}).sort(function(a,b){return b[1].u-a[1].u||b[1].v-a[1].v;}).slice(0,5)
+    .forEach(function(r){tp.appendChild(el('li',null,[el('span',{text:r[0]}),el('span',{class:'mono',text:r[1].u+' u. · '+money(r[1].v)})]));});
+  if(!tp.children.length)tp.appendChild(el('li',null,[el('span',{class:'hint',text:'Sin ventas este mes'})]));
+  var tc=$('mTopC');tc.innerHTML='';
+  Object.keys(cls).map(function(k){return [k,cls[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,5)
+    .forEach(function(r){tc.appendChild(el('li',null,[el('span',{text:r[0]}),el('span',{class:'mono',text:money(r[1])})]));});
+  if(!tc.children.length)tc.appendChild(el('li',null,[el('span',{class:'hint',text:'Sin ventas este mes'})]));
+}
+function shiftMonth(n){var p=(state.month||monthKey(new Date())).split('-');state.month=monthKey(new Date(+p[0],+p[1]-1+n,1));renderMonth();}
+$('mPrev').onclick=function(){shiftMonth(-1);};$('mNext').onclick=function(){shiftMonth(1);};
+
+// ================= Mi taller =================
+function buildTaller(){
+  Object.keys(T_FIELDS).forEach(function(gid){
+    var g=$(gid);g.innerHTML='';
+    T_FIELDS[gid].forEach(function(d){
+      var i=el('input',{id:'t-'+d[0],type:'number',step:'any',min:'0',inputmode:'decimal'});
+      i.addEventListener('input',function(){state.t[d[0]]=i.value;onTallerChange();});
+      g.appendChild(el('div',{class:'f'},[el('label',{for:'t-'+d[0],text:d[1]}),el('div',{class:'box'},[i,el('span',{text:d[2]})])]));
+    });
+  });
+  ['roundTo','d1q','d1p','d2q','d2p','bizName','bizContact'].forEach(function(k){var i=$('t-'+k);i.addEventListener(i.tagName==='SELECT'?'change':'input',function(){state.t[k]=i.value;onTallerChange();});});
+  $('t-calOn').addEventListener('change',function(){state.t.calOn=$('t-calOn').checked?'1':'0';refreshAlert();saveTallerSoon();});
+}
+function fillTaller(){
+  Object.keys(state.t).forEach(function(k){var i=$('t-'+k);if(i&&i.type!=='checkbox')i.value=state.t[k]??'';});
+  $('t-calOn').checked=state.t.calOn==='1';
+  renderEditRows('matRows',state.mats,[['name','text','Nombre'],['kgPrice','number','Precio'],['density','number','Densidad']],'material',function(){renderMatSelect();renderResult();renderEstimate();saveListSoon('mats');});
+  renderEditRows('prnRows',state.printers,[['name','text','Nombre'],['watts','number','Consumo'],['printerCost','number','Costo'],['lifeHours','number','Vida útil']],'impresora',function(){renderPrnSelect();renderResult();saveListSoon('printers');});
+}
+function onTallerChange(){$('q-margin').placeholder=state.t.marginPct+' (taller)';renderResult();renderEstimate();if(oDraft)renderOrderTotals();saveTallerSoon();}
+function renderEditRows(tbId,arr,cols,noun,onChange){
+  var tb=$(tbId);tb.innerHTML='';
+  arr.forEach(function(m){
+    var tds=cols.map(function(c){var i=el('input',{type:c[1],step:'any',min:'0',inputmode:c[1]==='number'?'decimal':null,'aria-label':c[2]+' de '+(m.name||noun)});i.value=m[c[0]]||'';
+      i.addEventListener('input',function(){m[c[0]]=i.value;onChange();});return el('td',null,[el('div',{class:'box'},[i])]);});
+    var rm=iconBtn('del','Quitar '+(m.name||noun),'del');
+    rm.onclick=function(){if(arr.length<=1)return toast(noun==='material'?'Tiene que quedar al menos un material.':'Tiene que quedar al menos una impresora.');
+      armConfirm(rm,m.id,'Tocá de nuevo para quitar '+(m.name||'la '+noun),function(){var ix=arr.indexOf(m);if(ix>=0)arr.splice(ix,1);fillTaller();onChange();});};
+    tds.push(el('td',null,[rm]));
+    tb.appendChild(el('tr',null,tds));
+  });
+}
+$('addMat').onclick=function(){state.mats.push({id:uid('m'),name:'',kgPrice:'',density:'1.24'});fillTaller();renderMatSelect();var ins=$('matRows').querySelectorAll('tr:last-child input');if(ins[0])ins[0].focus();};
+$('addPrn').onclick=function(){var b=state.printers[0]||PRN_DEFAULT[0];state.printers.push({id:uid('p'),name:'',watts:b.watts,printerCost:'',lifeHours:b.lifeHours});fillTaller();renderPrnSelect();var ins=$('prnRows').querySelectorAll('tr:last-child input');if(ins[0])ins[0].focus();};
+function openTaller(){fillTaller();$('tallerDlg').showModal();}
+$('openTaller').onclick=openTaller;
+$('closeTaller').onclick=function(){$('tallerDlg').close();};
+var tT,lT={};
+function saveTallerSoon(){clearTimeout(tT);tT=setTimeout(function(){if(gas)api('saveConfig',{name:'settings',value:state.t}).catch(function(){toast('No se pudo guardar el taller en tu Google.');});else saveLocal();},900);}
+function saveListSoon(which){clearTimeout(lT[which]);lT[which]=setTimeout(function(){
+  var arr=state[which].map(function(m){var o={};Object.keys(m).forEach(function(k){o[k]=String(m[k]==null?'':m[k]);});if(!o.name.trim())o.name='Sin nombre';return o;});
+  if(gas)api('saveConfig',{name:which==='mats'?'materials':'printers',value:arr}).catch(function(){toast('No se pudo guardar en tu Google.');});else saveLocal();},900);}
+
+// ================= backup =================
+$('bkDl').onclick=function(){
+  var data={app:'quiron-cotizador-3d',version:3,exportedAt:new Date().toISOString(),taller:state.t,materials:state.mats,printers:state.printers,quotes:state.list,orders:state.orders};
+  var name='cotizador-3d-copia-'+today()+'.json',blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+  if(downloads)downloads.save({filename:name,data:blob}).catch(function(){});
+  else{try{var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}catch(e){toast('No se pudo descargar.');}}
+};
+$('bkIn').addEventListener('change',async function(){
+  var f=$('bkIn').files[0];$('bkIn').value='';if(!f)return;
+  var data;try{data=JSON.parse(await f.text());}catch(e){toast('Ese archivo no es una copia válida.');return;}
+  if(!data||data.app!=='quiron-cotizador-3d'){toast('Ese archivo no es una copia de este cotizador.');return;}
+  var nq=(data.quotes||[]).length,no=(data.orders||[]).length;
+  $('tallerDlg').close();
+  var ok=await ask('Restaurar copia',['La copia es del '+new Date(data.exportedAt).toLocaleDateString('es-AR')+' y tiene '+nq+' piezas y '+no+' pedidos.','Se agregan o reemplazan los registros de la copia; lo que cargaste después y no está en la copia se mantiene. Tu taller pasa a ser el de la copia.'],'Restaurar');
+  if(!ok)return;
+  state.t=Object.assign({},T_DEFAULT,data.taller||{});
+  if(Array.isArray(data.materials)&&data.materials.length)state.mats=data.materials;
+  if(Array.isArray(data.printers)&&data.printers.length)state.printers=data.printers;
+  saveTallerSoon();saveListSoon('mats');saveListSoon('printers');
+  var n=0;
+  for(var i=0;i<(data.quotes||[]).length;i++){var q=Object.assign({},data.quotes[i]),id=q.id;delete q.id;if(!id)continue;try{await writeQuote(id,q);n++;}catch(e){}}
+  for(var j=0;j<(data.orders||[]).length;j++){var o=Object.assign({},data.orders[j]),oid=o.id;delete o.id;if(!oid)continue;try{await writeOrder(oid,o);n++;}catch(e){}}
+  renderAll();toast('Copia restaurada ('+n+' registros).',6000);
+});
+
+// ================= mobile price bar =================
+if(window.IntersectionObserver){
+  new IntersectionObserver(function(en){var vis=en[0].isIntersecting;$('mbar').classList.toggle('show',!vis);$('mAdd').tabIndex=vis?-1:0;$('mbar').setAttribute('aria-hidden',String(vis));},{threshold:0.05}).observe($('res'));
+}
+
+// ================= persistence =================
+function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify({t:state.t,mats:state.mats,printers:state.printers,list:state.list,orders:state.orders}));}catch(e){}}
+function loadLocal(){
+  try{var d=JSON.parse(localStorage.getItem(LS_KEY)||'null');
+    if(d){state.t=Object.assign({},T_DEFAULT,d.t||{});if(Array.isArray(d.mats)&&d.mats.length)state.mats=d.mats;if(Array.isArray(d.printers)&&d.printers.length)state.printers=d.printers;state.list=d.list||[];state.orders=d.orders||[];}}catch(e){}
+  renderAll();
+}
+function renderAll(){fillQuote();renderResult();renderList();renderOrders();renderEstimate();}
+
+buildTaller();renderAll();
+
+// ================= conexión =================
+function loadCfg(){try{return JSON.parse(localStorage.getItem(CFG_KEY)||'null');}catch(e){return null;}}
+function saveCfg(c){try{if(c)localStorage.setItem(CFG_KEY,JSON.stringify(c));else localStorage.removeItem(CFG_KEY);}catch(e){}}
+var lastLoad=0;
+async function connect(c,quiet){
+  gas=c;cloud='pending';refreshAlert();
+  try{
+    var r=await api('load');
+    var cf=r.config||{};
+    state.t=Object.assign({},T_DEFAULT,cf.settings||{});
+    if(Array.isArray(cf.materials)&&cf.materials.length)state.mats=cf.materials;
+    if(Array.isArray(cf.printers)&&cf.printers.length)state.printers=cf.printers;
+    var th={};state.list.forEach(function(q){if(q.thumb)th[q.id]=q.thumb;});
+    state.list=(r.quotes||[]).map(function(q){if(th[q.id])q.thumb=th[q.id];return q;}).sort(function(a,b){return (b.createdAt||'').localeCompare(a.createdAt||'');});
+    state.orders=r.orders||[];
+    cloud='ok';lastLoad=Date.now();refreshAlert();renderAll();
+    api('thumbs').then(function(t){var m=t.thumbs||{};state.list.forEach(function(q){if(m[q.id])q.thumb=m[q.id];});renderList();renderOrders();}).catch(function(){});
+    return true;
+  }catch(e){
+    var msg=e&&e.code==='clave'?'La clave no coincide con la del script.':'No pude conectar con el script. Revisá la URL y que esté implementado con acceso para «Cualquier usuario».';
+    if(quiet){cloud='offline';refreshAlert();toast(msg,7000);}else{gas=null;cloud='local';refreshAlert();}
+    throw {msg:msg};
+  }
+}
+$('openCloud').onclick=function(){var c=gas||loadCfg()||{};$('c-url').value=c.url||'';$('c-key').value=c.key||'';$('c-status').textContent=gas?(cloud==='ok'?'Conectado.':'Sin conexión en este momento.'):'';$('c-off').hidden=!gas;$('cloudDlg').showModal();};
+$('c-on').onclick=async function(){
+  var url=$('c-url').value.trim(),key=$('c-key').value;
+  if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)){$('c-status').textContent='La URL tiene que ser la de la implementación y terminar en /exec.';return;}
+  if(!key){$('c-status').textContent='Poné la clave.';return;}
+  var had=state.list.length||state.orders.length,local={list:state.list,orders:state.orders};
+  $('c-on').disabled=true;$('c-status').textContent='Conectando…';
+  try{
+    await connect({url:url,key:key},false);saveCfg({url:url,key:key});$('cloudDlg').close();
+    toast('Conectado a tu Google.');
+    if(had&&!state.list.length&&!state.orders.length){
+      var ok=await ask('Pasar tus datos a Google',['Tu Google está vacío y en este navegador tenés '+local.list.length+' piezas y '+local.orders.length+' pedidos. ¿Los subo?'],'Subir');
+      if(ok){for(var i=local.list.length-1;i>=0;i--){var q=local.list[i];try{await writeQuote(q.id,q);}catch(e){}}for(var j=0;j<local.orders.length;j++){var o=local.orders[j];try{await writeOrder(o.id,o);}catch(e){}}
+        saveTallerSoon();saveListSoon('mats');saveListSoon('printers');toast('Datos subidos a tu Google.');}
+    }
+  }catch(e){$('c-status').textContent=e.msg||'No pude conectar.';}
+  $('c-on').disabled=false;
+};
+$('c-off').onclick=function(){saveCfg(null);gas=null;cloud='local';$('cloudDlg').close();loadLocal();refreshAlert();toast('Desconectado. Ahora se guarda solo en este navegador.');};
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&gas&&!oDraft&&!state.editingId&&Date.now()-lastLoad>60000)connect(gas,true).catch(function(){});});
+
+var cfg0=loadCfg();
+if(cfg0&&cfg0.url){loadLocal();connect(cfg0,true).catch(function(){});}
+else{cloud='local';loadLocal();refreshAlert();$('filesHint').textContent='Conectá tu Google para guardar los archivos en tu Drive.';}
+})();
+</script>
+
+</body>
+</html>
