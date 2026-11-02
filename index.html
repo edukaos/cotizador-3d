@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#15171C">
+<script>(function(){try{var t=localStorage.getItem("quiron-cotizador-3d-tema");if(t&&t!=="auto")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="description" content="Calculadora de costos de impresión 3D con lista de precios, pedidos y presupuestos. Quirón 3D.">
@@ -27,6 +28,12 @@
   --ink:#ECEEF2;--ink2:#C9CDD5;--muted:#9AA0AC;--accentInk:#FDBA74;--danger:#F87171;--ok:#4ADE80;
   --panel:#1F232B;--panelLine:#343944;--bar:#323742;--viewer:#12151A;
 }
+:root[data-theme="dim"]{
+  --bg:#23272F;--card:#2B3039;--line:#3B414C;--field:#323843;--fieldline:#4B5260;
+  --ink:#EEF0F4;--ink2:#D3D7DE;--muted:#AEB4BF;--accentInk:#FDBA74;--danger:#FCA5A5;--ok:#6EE7A0;
+  --panel:#1C1F25;--panelLine:#3A3F49;--bar:#3A3F49;--viewer:#1E2229;
+}
+.sel.themesel{height:44px;width:auto;padding:0 8px}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'IBM Plex Sans',system-ui,sans-serif}
@@ -241,6 +248,13 @@ dialog.wide{width:min(760px,calc(100% - 32px))}
     </div>
     <div class="hright">
       <div class="alert" id="alert" role="status" hidden><span class="dot"></span><span id="alertTxt"></span></div>
+      <label for="themeSel" class="sr">Tema de colores</label>
+      <select id="themeSel" class="sel themesel" title="Tema de colores">
+        <option value="auto">Tema: automático</option>
+        <option value="light">Tema: claro</option>
+        <option value="dark">Tema: oscuro</option>
+        <option value="dim">Tema: oscuro suave</option>
+      </select>
       <button type="button" class="btn" id="openCloud"><span class="dot" id="cloudDot" style="background:var(--muted)"></span><span id="cloudLbl">Conectar con Google</span></button>
       <button type="button" class="btn" id="openTaller">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
@@ -609,7 +623,7 @@ var toastT;function toast(t,ms){$('toast').textContent=t;clearTimeout(toastT);to
 function refreshAlert(){
   var msgs=[];
   if(!gas)msgs.push('Guardando solo en este navegador');
-  else if(cloud==='offline')msgs.push('Sin conexión con tu Google');
+  else if(cloud==='offline')msgs.push('Sin conexión con tu Google · mostrando lo último guardado');
   $('alert').hidden=!msgs.length;$('alertTxt').textContent=msgs.join(' · ');
   $('cloudDot').style.background=gas&&cloud==='ok'?'var(--ok)':gas?'#D97706':'var(--muted)';
   $('cloudLbl').textContent=gas?'Google conectado':'Conectar con Google';
@@ -1052,7 +1066,7 @@ function editQuote(it,dup){
 function deleteQuote(it){
   delete state.sel[it.id];
   if(state.editingId===it.id){state.editingId=null;newQuote();}
-  var prev=state.list.slice();state.list=state.list.filter(function(x){return x.id!==it.id;});if(!gas)saveLocal();renderList();
+  var prev=state.list.slice();state.list=state.list.filter(function(x){return x.id!==it.id;});if(!gas)saveLocal();else saveCache();renderList();
   if(gas)api('deleteQuote',{id:it.id}).catch(function(){state.list=prev;renderList();toast('No se pudo eliminar en tu Google. Probá de nuevo.');});
 }
 var FORM_KEYS=['perPlate','grams','hours','minutes','postMin','extras','kgPrice','density','watts','kwh','printerCost','lifeHours','laborRate','failPct','marginPct','feePct','roundTo','minPrice'];
@@ -1065,7 +1079,7 @@ async function writeQuote(id,entry){
   }
   entry.id=id;var ex=state.list.some(function(x){return x.id===id;});
   if(ex)state.list=state.list.map(function(x){return x.id===id?entry:x;});else state.list.unshift(entry);
-  if(!gas)saveLocal();renderList();
+  if(!gas)saveLocal();else saveCache();renderList();
 }
 async function saveQuote(){
   var btn=$('addBtn');if(btn.disabled)return null;
@@ -1271,7 +1285,7 @@ async function writeOrder(id,body){
       calOn:state.t.calOn==='1',calTitle:calSummary(body),calDesc:calDesc(body)});
     body.calEventId=r.calEventId||null;
   }
-  body.id=id;state.orders=state.orders.filter(function(o){return o.id!==id;});state.orders.push(body);if(!gas)saveLocal();renderOrders();
+  body.id=id;state.orders=state.orders.filter(function(o){return o.id!==id;});state.orders.push(body);if(!gas)saveLocal();else saveCache();renderOrders();
 }
 $('oSave').onclick=async function(){
   if(!oDraft)return;var err=$('o-err');
@@ -1348,7 +1362,7 @@ function renderOrders(){
       var db_=iconBtn('del','Eliminar pedido de '+o.client,'del');
       db_.onclick=function(){armConfirm(db_,o.id,'Tocá de nuevo para eliminar el pedido de '+o.client,function(){
         unsyncCal(o);
-        var prev=state.orders.slice();state.orders=state.orders.filter(function(x){return x.id!==o.id;});if(!gas)saveLocal();renderOrders();
+        var prev=state.orders.slice();state.orders=state.orders.filter(function(x){return x.id!==o.id;});if(!gas)saveLocal();else saveCache();renderOrders();
         if(gas)api('deleteOrder',{id:o.id}).catch(function(){state.orders=prev;renderOrders();toast('No se pudo eliminar en tu Google.');});});};
       right.appendChild(eb);right.appendChild(db_);
     }
@@ -1528,10 +1542,10 @@ function openTaller(){fillTaller();$('tallerDlg').showModal();}
 $('openTaller').onclick=openTaller;
 $('closeTaller').onclick=function(){$('tallerDlg').close();};
 var tT,lT={};
-function saveTallerSoon(){clearTimeout(tT);tT=setTimeout(function(){if(gas)api('saveConfig',{name:'settings',value:state.t}).catch(function(){toast('No se pudo guardar el taller en tu Google.');});else saveLocal();},900);}
+function saveTallerSoon(){clearTimeout(tT);tT=setTimeout(function(){if(gas)saveCache();if(gas)api('saveConfig',{name:'settings',value:state.t}).catch(function(){toast('No se pudo guardar el taller en tu Google.');});else saveLocal();},900);}
 function saveListSoon(which){clearTimeout(lT[which]);lT[which]=setTimeout(function(){
   var arr=state[which].map(function(m){var o={};Object.keys(m).forEach(function(k){o[k]=String(m[k]==null?'':m[k]);});if(!o.name.trim())o.name='Sin nombre';return o;});
-  if(gas)api('saveConfig',{name:which==='mats'?'materials':'printers',value:arr}).catch(function(){toast('No se pudo guardar en tu Google.');});else saveLocal();},900);}
+  if(gas)saveCache();if(gas)api('saveConfig',{name:which==='mats'?'materials':'printers',value:arr}).catch(function(){toast('No se pudo guardar en tu Google.');});else saveLocal();},900);}
 
 // ================= backup =================
 $('bkDl').onclick=function(){
@@ -1574,6 +1588,37 @@ function renderAll(){fillQuote();renderResult();renderList();renderOrders();rend
 
 buildTaller();renderAll();
 
+// ================= tema =================
+var THEME_KEY='quiron-cotizador-3d-tema';
+function applyTheme(t){
+  if(t&&t!=='auto')document.documentElement.setAttribute('data-theme',t);else document.documentElement.removeAttribute('data-theme');
+  var dark=t==='dark'||t==='dim'||((!t||t==='auto')&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+  var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dim'?'#23272F':dark?'#0F1115':'#F3F4F6';
+}
+(function(){var t='auto';try{t=localStorage.getItem(THEME_KEY)||'auto';}catch(e){}$('themeSel').value=t;applyTheme(t);})();
+$('themeSel').addEventListener('change',function(){var t=$('themeSel').value;try{localStorage.setItem(THEME_KEY,t);}catch(e){}applyTheme(t);});
+
+// ================= copia local de los datos de Google =================
+var CACHE_KEY='quiron-cotizador-3d-cache',THUMB_KEY='quiron-cotizador-3d-cache-img';
+var cacheT;
+function saveCache(){
+  if(!gas)return;clearTimeout(cacheT);
+  cacheT=setTimeout(function(){
+    try{localStorage.setItem(CACHE_KEY,JSON.stringify({t:state.t,mats:state.mats,printers:state.printers,
+      list:state.list.map(function(q){var c=Object.assign({},q);delete c.thumb;return c;}),orders:state.orders,at:Date.now()}));}catch(e){}
+    try{var th={};state.list.forEach(function(q){if(q.thumb)th[q.id]=q.thumb;});localStorage.setItem(THUMB_KEY,JSON.stringify(th));}catch(e){try{localStorage.removeItem(THUMB_KEY);}catch(e2){}}
+  },500);
+}
+function loadCache(){
+  try{
+    var d=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(!d)return false;
+    var th={};try{th=JSON.parse(localStorage.getItem(THUMB_KEY)||'{}')||{};}catch(e){}
+    state.t=Object.assign({},T_DEFAULT,d.t||{});if(Array.isArray(d.mats)&&d.mats.length)state.mats=d.mats;if(Array.isArray(d.printers)&&d.printers.length)state.printers=d.printers;
+    state.list=(d.list||[]).map(function(q){if(th[q.id])q.thumb=th[q.id];return q;});state.orders=d.orders||[];
+    renderAll();return true;
+  }catch(e){return false;}
+}
+
 // ================= conexión =================
 function loadCfg(){try{return JSON.parse(localStorage.getItem(CFG_KEY)||'null');}catch(e){return null;}}
 function saveCfg(c){try{if(c)localStorage.setItem(CFG_KEY,JSON.stringify(c));else localStorage.removeItem(CFG_KEY);}catch(e){}}
@@ -1589,12 +1634,13 @@ async function connect(c,quiet){
     var th={};state.list.forEach(function(q){if(q.thumb)th[q.id]=q.thumb;});
     state.list=(r.quotes||[]).map(function(q){if(th[q.id])q.thumb=th[q.id];return q;}).sort(function(a,b){return (b.createdAt||'').localeCompare(a.createdAt||'');});
     state.orders=r.orders||[];
-    cloud='ok';lastLoad=Date.now();refreshAlert();renderAll();
-    api('thumbs').then(function(t){var m=t.thumbs||{};state.list.forEach(function(q){if(m[q.id])q.thumb=m[q.id];});renderList();renderOrders();}).catch(function(){});
+    cloud='ok';lastLoad=Date.now();refreshAlert();renderAll();saveCache();
+    $('filesHint').textContent='Los archivos se guardan en tu Drive al agregar la pieza a la lista (hasta 15 MB cada uno).';
+    api('thumbs').then(function(t){var m=t.thumbs||{};state.list.forEach(function(q){if(m[q.id])q.thumb=m[q.id];});renderList();renderOrders();saveCache();}).catch(function(){});
     return true;
   }catch(e){
     var msg=e&&e.code==='clave'?'La clave no coincide con la del script.':'No pude conectar con el script. Revisá la URL y que esté implementado con acceso para «Cualquier usuario».';
-    if(quiet){cloud='offline';refreshAlert();toast(msg,7000);}else{gas=null;cloud='local';refreshAlert();}
+    if(quiet){cloud='offline';refreshAlert();toast(e&&e.code==='clave'?msg:'Sin conexión con tu Google: te muestro lo último guardado. Los cambios nuevos no se van a guardar hasta que vuelva la conexión.',8000);}else{gas=null;cloud='local';refreshAlert();}
     throw {msg:msg};
   }
 }
@@ -1616,11 +1662,11 @@ $('c-on').onclick=async function(){
   }catch(e){$('c-status').textContent=e.msg||'No pude conectar.';}
   $('c-on').disabled=false;
 };
-$('c-off').onclick=function(){saveCfg(null);gas=null;cloud='local';$('cloudDlg').close();loadLocal();refreshAlert();toast('Desconectado. Ahora se guarda solo en este navegador.');};
+$('c-off').onclick=function(){try{localStorage.removeItem(CACHE_KEY);localStorage.removeItem(THUMB_KEY);}catch(e){}saveCfg(null);gas=null;cloud='local';$('cloudDlg').close();loadLocal();refreshAlert();$('filesHint').textContent='Conectá tu Google para guardar los archivos en tu Drive.';toast('Desconectado. Ahora se guarda solo en este navegador.');};
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&gas&&!oDraft&&!state.editingId&&Date.now()-lastLoad>60000)connect(gas,true).catch(function(){});});
 
 var cfg0=loadCfg();
-if(cfg0&&cfg0.url){loadLocal();connect(cfg0,true).catch(function(){});}
+if(cfg0&&cfg0.url){gas=cfg0;if(!loadCache())renderAll();refreshAlert();connect(cfg0,true).catch(function(){});}
 else{cloud='local';loadLocal();refreshAlert();$('filesHint').textContent='Conectá tu Google para guardar los archivos en tu Drive.';}
 })();
 </script>
