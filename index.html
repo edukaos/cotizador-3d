@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#15171C">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="description" content="Calculadora de costos de impresión 3D con lista de precios, pedidos y presupuestos. Quirón 3D.">
 <title>Cotizador 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1621,5 +1625,6 @@ else{cloud='local';loadLocal();refreshAlert();$('filesHint').textContent='Conect
 })();
 </script>
 
+<script>if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('sw.js').catch(function(){});</script>
 </body>
 </html>
