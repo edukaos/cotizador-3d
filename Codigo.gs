@@ -149,7 +149,10 @@ function filaDe(sh, id) {
   const f = sh.getRange(2, 1, sh.getLastRow() - 1, 1).createTextFinder(String(id)).matchEntireCell(true).findNext();
   return f ? f.getRow() : 0;
 }
+// Un texto que empieza con = + - @ Sheets lo toma como fórmula: se guarda como texto literal.
+function texto(v) { return (typeof v === 'string' && /^[=+\-@]/.test(v)) ? "'" + v : v; }
 function guardar(nombre, id, valores) {
+  valores = valores.map(texto);
   const sh = hoja(nombre), r = filaDe(sh, id);
   if (r) sh.getRange(r, 1, 1, valores.length).setValues([valores]);
   else sh.appendRow(valores);
