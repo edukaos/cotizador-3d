@@ -23,8 +23,8 @@ Con un script gratuito en tu cuenta de Google, la lista y los pedidos van a una 
 1. Creá una **Google Sheet** nueva (por ejemplo «Cotizador 3D»).
 2. En la planilla: **Extensiones › Apps Script**.
 3. Borrá lo que haya y pegá el contenido de [`Codigo.gs`](Codigo.gs).
-4. En la línea `const CLAVE = 'CAMBIA-ESTA-CLAVE';` poné una clave larga que solo sepas vos. Guardá (ícono del disquete).
-5. Arriba, elegí la función **configurar** y tocá **Ejecutar**. Google te pide permisos: **Revisar permisos › tu cuenta › Configuración avanzada › Ir a (proyecto) › Permitir**. (Aparece el aviso de "app no verificada" porque el script es tuyo; es normal.)
+4. Guardá (ícono del disquete). Arriba, elegí la función **configurar** y tocá **Ejecutar**. Google te pide permisos: **Revisar permisos › tu cuenta › Configuración avanzada › Ir a (proyecto) › Permitir**. (Aparece el aviso de "app no verificada" porque el script es tuyo; es normal.)
+5. En el **Registro de ejecución** aparece **tu CLAVE** (se genera sola). Guardala; si la perdés, ejecutá **configurar** de nuevo y se vuelve a mostrar.
 6. **Implementar › Nueva implementación** › engranaje › **Aplicación web**.
    - Ejecutar como: **Yo**
    - Quién tiene acceso: **Cualquier usuario**

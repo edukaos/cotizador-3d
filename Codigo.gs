@@ -5,18 +5,18 @@
  * a una carpeta de tu Drive y agenda las entregas en tu Google Calendar.
  *
  * Instalación (una sola vez):
- *  1. Cambiá CLAVE por una contraseña larga que solo sepas vos.
- *  2. Elegí la función «configurar» arriba y tocá «Ejecutar». Aceptá los permisos.
+ *  1. Elegí la función «configurar» arriba y tocá «Ejecutar». Aceptá los permisos.
+ *  2. En el «Registro de ejecución» aparece tu CLAVE (se genera sola). Guardala.
  *  3. Implementar › Nueva implementación › Tipo: Aplicación web.
  *     Ejecutar como: Yo · Quién tiene acceso: Cualquier usuario.
  *  4. Copiá la URL que termina en /exec y pegala en el cotizador (botón «Conectar con Google»)
- *     junto con tu CLAVE.
+ *     junto con tu CLAVE. Si la olvidás, volvé a ejecutar «configurar» y se muestra de nuevo.
  *
  * Si cambiás este código, volvé a implementar: Implementar › Gestionar implementaciones ›
  * Editar (lápiz) › Versión: Nueva versión › Implementar. La URL no cambia.
  */
 
-const CLAVE = 'CAMBIA-ESTA-CLAVE';          // ← poné tu propia clave
+const CLAVE = '';                           // vacío = se genera sola al ejecutar «configurar»
 const CARPETA = 'Quirón 3D – Pedidos';      // carpeta de Drive para los archivos
 const CALENDARIO = '';                      // vacío = tu calendario principal
 
@@ -32,8 +32,12 @@ function configurar() {
   Object.keys(HOJAS).forEach(hoja);
   carpeta();
   cal().getName();
+  const p = PropertiesService.getScriptProperties();
+  if (!clave()) p.setProperty('clave', Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().slice(0, 8));
+  Logger.log('Tu CLAVE para el cotizador es: ' + clave());
   Logger.log('Listo. Ahora implementá como aplicación web.');
 }
+function clave() { return CLAVE || PropertiesService.getScriptProperties().getProperty('clave') || ''; }
 
 function doGet() {
   return json({ ok: true, app: 'quiron-cotizador-3d', mensaje: 'El servidor del cotizador está funcionando.' });
@@ -42,7 +46,8 @@ function doGet() {
 function doPost(e) {
   let req;
   try { req = JSON.parse(e.postData.contents); } catch (err) { return json({ ok: false, error: 'json' }); }
-  if (!req || req.key !== CLAVE) return json({ ok: false, error: 'clave' });
+  const k = clave();
+  if (!req || !k || req.key !== k) return json({ ok: false, error: 'clave' });
   const fn = ACCIONES[req.action];
   if (!fn) return json({ ok: false, error: 'accion' });
   const lectura = req.action === 'load' || req.action === 'thumbs' || req.action === 'ping';
