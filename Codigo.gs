@@ -19,6 +19,7 @@
 const CLAVE = '';                           // vacío = se genera sola al ejecutar «configurar»
 const CARPETA = 'Quirón 3D – Pedidos';      // carpeta de Drive para los archivos
 const CALENDARIO = '';                      // vacío = tu calendario principal
+const PLANILLA_ID = '';                     // vacío = la planilla del script (o se crea una)
 
 const HOJAS = {
   Cotizaciones: ['id', 'Fecha', 'Pieza', 'Material', 'Impresora', 'Piezas/placa', 'Gramos', 'Tiempo (h)', 'Costo u.', 'Precio u.', 'Archivos', 'Actualizado', 'datos'],
@@ -122,8 +123,18 @@ const ACCIONES = {
 };
 
 /* ---------- planilla ---------- */
+function libro() {
+  const act = SpreadsheetApp.getActive();
+  if (act) return act;
+  const p = PropertiesService.getScriptProperties();
+  const id = PLANILLA_ID || p.getProperty('planilla');
+  if (id) return SpreadsheetApp.openById(id);
+  const nuevo = SpreadsheetApp.create('Cotizador 3D');
+  p.setProperty('planilla', nuevo.getId());
+  return nuevo;
+}
 function hoja(nombre) {
-  const ss = SpreadsheetApp.getActive();
+  const ss = libro();
   let sh = ss.getSheetByName(nombre);
   if (!sh) {
     sh = ss.insertSheet(nombre);
