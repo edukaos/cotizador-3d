@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#081424">
+<script>/* La dirección oficial es cotizador.quiron3d.com: la copia de GitHub Pages lleva ahí, con la conexión y el tema. */
+(function(){var H='cotizador.quiron3d.com';try{
+if(location.hostname==='edukaos.github.io'){var m={},k=['quiron-cotizador-3d-nube','quiron-cotizador-3d-tema'];
+for(var i=0;i<k.length;i++){var v=localStorage.getItem(k[i]);if(v)m[k[i]]=v;}
+location.replace('https://'+H+'/'+(Object.keys(m).length?'#migrar='+encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(m))))):''));return;}
+var g=location.hash.match(/^#migrar=(.+)$/);if(g){var d=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(g[1])))));
+for(var n in d)if(/^quiron-cotizador-3d-/.test(n)&&!localStorage.getItem(n))localStorage.setItem(n,d[n]);
+history.replaceState(null,'',location.pathname+location.search);}}catch(e){}})();</script>
 <script>(function(){try{var t=localStorage.getItem("quiron-cotizador-3d-tema");if(t&&t!=="auto")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
