@@ -306,6 +306,8 @@ dialog.sheet{border-radius:24px 0 0 24px}
 .qfoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;padding:8px 0 4px;font-size:13px;color:var(--muted)}
 .qfoot .qbrand-svg{height:16px}
 .qfoot a{color:var(--muted)}
+
+.secret{-webkit-text-security:disc;text-security:disc}
 </style>
 </head>
 <body>
@@ -603,7 +605,7 @@ dialog.sheet{border-radius:24px 0 0 24px}
   <div class="dbd">
     <p class="hint" style="font-size:14px;color:var(--ink2)">Con tu script de Google Apps Script, la lista y los pedidos se guardan en tu Google Sheet, los archivos en tu Drive y las entregas en tu Calendar. Sin conectar, todo queda solo en este navegador.</p>
     <div class="f"><label for="c-url">URL del script (termina en /exec)</label><div class="box"><input id="c-url" type="text" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></div></div>
-    <div class="f"><label for="c-key">Clave</label><div class="box"><input id="c-key" type="password" autocomplete="off"></div></div>
+    <div class="f"><label for="c-key">Clave</label><div class="box"><input id="c-key" type="text" class="secret" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other"></div></div>
     <p class="hint" id="c-status" role="status"></p>
     <p class="hint">La URL y la clave quedan guardadas solo en este navegador. <a href="https://github.com/edukaos/cotizador-3d#guardar-en-tu-google-sheet--drive--calendar" id="c-help" target="_blank" rel="noopener">Cómo instalar el script</a></p>
     <div class="dfoot"><button type="button" class="btn" id="c-off">Desconectar</button><button type="button" class="btn primary" id="c-on">Conectar</button></div>
