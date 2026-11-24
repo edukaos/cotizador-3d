@@ -82,7 +82,7 @@ const ACCIONES = {
 
   saveQuote: req => {
     const d = req.data || {}, s = req.summary || {};
-    guardar('Cotizaciones', req.id, [req.id, d.date || '', d.name || '', d.material || '', d.printer || '',
+    guardar('Cotizaciones', req.id, [req.id, d.date ? "'" + d.date : '', d.name || '', d.material || '', d.printer || '',
       s.perPlate || 1, s.grams || 0, s.hours || 0, s.cost || 0, s.price || 0,
       (d.attachments || []).map(a => a.url).join('\n'), new Date(), JSON.stringify(d)]);
     if (req.thumb) guardar('Imagenes', req.id, [req.id].concat(partes(req.thumb)));
@@ -153,9 +153,33 @@ function filaDe(sh, id) {
 function texto(v) { return (typeof v === 'string' && /^[=+\-@]/.test(v)) ? "'" + v : v; }
 function guardar(nombre, id, valores) {
   valores = valores.map(texto);
-  const sh = hoja(nombre), r = filaDe(sh, id);
-  if (r) sh.getRange(r, 1, 1, valores.length).setValues([valores]);
-  else sh.appendRow(valores);
+  const sh = hoja(nombre);
+  let r = filaDe(sh, id);
+  if (!r) r = filaLibre(sh);
+  sh.getRange(r, 1, 1, valores.length).setValues([valores]);
+}
+// Primera fila libre debajo de la última que tiene un id. No usa appendRow porque, si la hoja
+// está convertida en tabla (Formato › Convertir en tabla), Google cuenta las filas vacías de la tabla.
+function filaLibre(sh) {
+  const n = sh.getLastRow();
+  let r = 2;
+  if (n >= 2) {
+    const ids = sh.getRange(2, 1, n - 1, 1).getValues();
+    for (let i = ids.length - 1; i >= 0; i--) if (String(ids[i][0]).trim() !== '') { r = i + 3; break; }
+  }
+  if (r > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), r - sh.getMaxRows());
+  return r;
+}
+/** Opcional: ejecutala una vez para juntar las filas que quedaron separadas por filas vacías. */
+function ordenarFilas() {
+  ['Cotizaciones', 'Pedidos'].forEach(function (nombre) {
+    const sh = hoja(nombre), n = sh.getLastRow();
+    if (n < 2) return;
+    const ancho = HOJAS[nombre].length, rango = sh.getRange(2, 1, n - 1, ancho);
+    const llenas = rango.getValues().filter(function (f) { return String(f[0]).trim() !== ''; });
+    rango.clearContent();
+    if (llenas.length) sh.getRange(2, 1, llenas.length, ancho).setValues(llenas.map(function (f) { return f.map(texto); }));
+  });
 }
 function borrar(nombre, id) { const sh = hoja(nombre), r = filaDe(sh, id); if (r) sh.deleteRow(r); }
 function filas(nombre) {
