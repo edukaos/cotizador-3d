@@ -309,6 +309,12 @@ dialog.sheet{border-radius:24px 0 0 24px}
 
 .secret{-webkit-text-security:disc;text-security:disc}
 
+/* ===== Mejoras nov 2026 ===== */
+.bkwarn{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 10px 8px 14px;border-radius:12px;background:var(--glass);box-shadow:inset 0 0 0 1px var(--accent);font-size:13px;color:var(--ink2)}
+.bkwarn span{flex:1 1 200px}
+#msgKind{align-self:flex-start;flex-wrap:wrap}
+@media (min-width:480px){.mini{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:479px){.mini .f:nth-child(3){grid-column:1/-1}}
 /* ===== Revisión nov 2026: celular más compacto ===== */
 .mmeta{display:none}
 @media (max-width:640px){
@@ -358,6 +364,7 @@ dialog.sheet{border-radius:24px 0 0 24px}
     </div>
     <div class="hright">
       <div class="alert" id="alert" role="status" hidden><span class="dot"></span><span id="alertTxt"></span></div>
+      <div class="bkwarn" id="bkWarn" hidden><span id="bkWarnTxt"></span><button type="button" class="btn sm primary" id="bkNow">Descargar copia</button><button type="button" class="btn sm" id="bkLater">Más tarde</button></div>
       <label for="themeSel" class="sr">Tema de colores</label>
       <select id="themeSel" class="sel themesel" title="Tema de colores">
         <option value="auto">Tema: automático</option>
@@ -397,9 +404,10 @@ dialog.sheet{border-radius:24px 0 0 24px}
               <div class="mini">
                 <div class="f"><label for="w-infill">Relleno</label><div class="box"><input id="w-infill" type="number" step="any" min="0" inputmode="decimal"><span>%</span></div></div>
                 <div class="f"><label for="w-shell">Paredes</label><div class="box"><input id="w-shell" type="number" step="any" min="0" inputmode="decimal"><span>%</span></div></div>
+                <div class="f"><label for="w-gph">Velocidad</label><div class="box"><input id="w-gph" type="number" step="any" min="1" inputmode="decimal"><span>g/h</span></div></div>
               </div>
-              <div class="est" style="margin-top:10px"><span><span class="hint">Peso estimado</span><br><b class="mono" id="estG">—</b></span><button type="button" class="btn sm" id="useEst">Usar este peso</button></div>
-              <p class="hint" style="margin-top:8px">Aproximado, con la densidad del material elegido. Para el valor exacto subí el .gcode o el .3mf laminado.</p>
+              <div class="est" style="margin-top:10px"><span><span class="hint">Peso y tiempo estimados</span><br><b class="mono" id="estG">—</b> · <b class="mono" id="estT">—</b></span><button type="button" class="btn sm" id="useEst">Usar estos valores</button></div>
+              <p class="hint" style="margin-top:8px">Aproximado: el peso sale de la densidad del material y el tiempo de cuántos gramos por hora imprime tu máquina (unos 10–15 con impresoras comunes, 20–30 con las rápidas). Para el valor exacto subí el .gcode o el .3mf laminado.</p>
             </div>
           </div>
         </div>
@@ -423,6 +431,7 @@ dialog.sheet{border-radius:24px 0 0 24px}
         </div>
         <p class="hint" id="plateHint" hidden></p>
         <p class="warn" id="matWarn" hidden></p>
+        <p class="warn" id="staleWarn" hidden></p>
         <p class="hint">Insumos extra: imanes, argollas, pintura, packaging. Ganancia vacía = la de tu taller.</p>
       </section>
     </div>
@@ -476,6 +485,7 @@ dialog.sheet{border-radius:24px 0 0 24px}
       <div class="tools">
         <label for="q" class="sr">Buscar en la lista</label>
         <input id="q" class="search" type="search" placeholder="Buscar pieza o material">
+        <button type="button" class="btn" id="catBtn">Catálogo</button>
         <button type="button" class="btn" id="repriceBtn">Actualizar precios</button>
         <button type="button" class="btn primary" id="mkOrder" disabled>Crear pedido</button>
       </div>
@@ -565,6 +575,7 @@ dialog.sheet{border-radius:24px 0 0 24px}
     <div class="tops">
       <div class="dsec"><h3 class="lbl" style="margin:0">Piezas más vendidas</h3><ol id="mTopP"></ol></div>
       <div class="dsec"><h3 class="lbl" style="margin:0">Mejores clientes</h3><ol id="mTopC"></ol></div>
+      <div class="dsec"><h3 class="lbl" style="margin:0">Filamento usado</h3><ol id="mFil"></ol></div>
     </div>
   </section>
   <footer class="qfoot"><span>Una app de</span><a class="qbrand" href="https://apps.quiron3d.com" title="Quirón · más apps"><svg class="qbrand-svg" xmlns="http://www.w3.org/2000/svg" viewBox="160 102 692 283" role="img" aria-label="Quirón"><path fill="#E600FF" d="M398.4,376.5l-84.3-84.3l-0.0,0.0l-0.0-0.0c-9.4,4.1-20.0,6.2-31.2,5.7 c-36.4-1.6-65.8-31.4-67.0-67.8c-1.3-41.1,32.7-74.6,74.0-72.4c34.6,1.8,63,29.2,66.0,63.7 c0.6,7.7,0.1,15.2-1.5,22.3l-0.7,2.2c-4.5,14.4-13.0,27.3-24.6,37.0l-1.7,1.5l0,0c-0.0,0.0-0.1,0.0-0.1,0.1 l34.1,34.1c25.9-21.4,42.5-53.6,42.9-89.8c0.7-64.8-51.6-118.5-116.4-119.4c-66.0-0.9-119.8,52.3-119.8,118.1 c0,65.2,52.9,118.1,118.1,118.1c4.4,0,8.7-0.2,13.0-0.7l31.4,31.4L398.4,376.5z"></path><path fill="#A928C9" d="M314.1,291.9L314.1,292l-0.0-0.0c-8.5,3.7-18.0,5.8-28.0,5.8c-38.8,0-70.2-31.4-70.2-70.2 c0-17.1,6.1-32.8,16.3-45.0l-62.4,65.7c8.5,48.6,46.9,86.9,95.5,95.6l49.1-51.7L314.1,291.9z"></path><g fill="currentColor" transform="translate(444.0 187.5) scale(1.672) translate(-168 -391)"><path d="M207.0,457.7l-7.5-9.0c-2.0,0.5-4.2,0.7-6.4,0.7c-4.6,0-8.9-1.0-12.7-3.2 c-3.8-2.1-6.9-5.2-9.2-9.0c-2.2-3.8-3.4-8.2-3.4-13.1c0-4.8,1.1-9.1,3.4-13.0c2.2-3.8,5.3-6.8,9.2-9.0 c3.8-2.1,8.1-3.2,12.7-3.2c4.6,0,8.9,1.0,12.8,3.2c3.8,2.1,6.9,5.2,9.1,9.0c2.2,3.8,3.3,8.2,3.3,13.0 c0,4.4-0.9,8.4-2.8,12.0c-1.8,3.6-4.4,6.5-7.6,8.8l11.3,12.7H207.0z M179.8,432.8c1.2,2.5,3.0,4.4,5.3,5.7 c2.3,1.3,4.9,2.0,7.9,2.0s5.6-0.6,7.8-2.0c2.2-1.3,4.0-3.2,5.3-5.7c1.2-2.5,1.9-5.4,1.9-8.7 c0-3.3-0.6-6.2-1.9-8.7c-1.2-2.4-3.0-4.3-5.3-5.7c-2.2-1.3-4.9-1.9-7.8-1.9s-5.6,0.6-7.9,1.9 c-2.3,1.3-4.0,3.2-5.3,5.7c-1.2,2.4-1.9,5.3-1.9,8.7C177.8,427.4,178.5,430.3,179.8,432.8z"></path><path d="M263.1,409.6v39.3h-10.0v-4.9c-1.2,1.7-2.9,3.0-5.0,4.0c-2.0,0.9-4.3,1.4-6.7,1.4 c-3.0,0-5.8-0.6-8.1-1.9c-2.3-1.3-4.2-3.2-5.5-5.7c-1.3-2.5-2.0-5.5-2.0-9.0v-23.1h9.9v21.6 c0,3.1,0.7,5.5,2.3,7.2c1.5,1.6,3.7,2.5,6.4,2.5c2.7,0,4.9-0.8,6.4-2.5c1.5-1.6,2.3-4.0,2.3-7.2v-21.6H263.1 z"></path><path d="M273.6,403.3c-1.1-1.1-1.7-2.5-1.7-4.1c0-1.6,0.5-3.0,1.7-4.1c1.1-1.1,2.6-1.6,4.3-1.6 c1.7,0,3.2,0.5,4.3,1.6c1.1,1.1,1.7,2.5,1.7,4.1c0,1.6-0.5,3.0-1.7,4.1c-1.1,1.1-2.6,1.6-4.3,1.6 C276.2,404.9,274.8,404.4,273.6,403.3z M282.9,409.6v39.3h-9.9v-39.3H282.9z"></path><path d="M307.7,410.8c2.0-1.1,4.4-1.7,7.0-1.7v10.4h-2.6c-3.1,0-5.4,0.7-7.0,2.2 c-1.5,1.4-2.3,4.0-2.3,7.6v19.6h-9.9v-39.3h9.9v6.1C303.9,413.6,305.6,412.0,307.7,410.8z"></path><path d="M328.7,447.1c-3.0-1.6-5.4-4.0-7.1-7.1c-1.7-3.0-2.5-6.6-2.5-10.6 c0-4.0,0.8-7.5,2.6-10.6c1.7-3.0,4.2-5.4,7.2-7.1c3.0-1.6,6.5-2.5,10.3-2.5c3.7,0,7.2,0.8,10.3,2.5 c3.0,1.6,5.5,4.0,7.2,7.1c1.7,3.0,2.6,6.6,2.6,10.6c0,4.0-0.9,7.5-2.7,10.6c-1.8,3.0-4.2,5.4-7.3,7.1 c-3.1,1.6-6.5,2.5-10.4,2.5C335.1,449.6,331.7,448.8,328.7,447.1z M344.0,439.6c1.5-0.8,2.8-2.1,3.8-3.9 c0.9-1.7,1.4-3.8,1.4-6.4c0-3.7-0.9-6.6-2.9-8.6c-1.9-2.0-4.3-3.0-7.2-3.0c-2.8,0-5.2,1.0-7.1,3.0 c-1.9,2.0-2.8,4.8-2.8,8.6c0,3.7,0.9,6.6,2.8,8.6c1.8,2.0,4.2,3.0,7.0,3.0 C340.7,441.0,342.4,440.5,344.0,439.6z M347.4,398.9l-16.3,7.4v-7.1l16.3-8.4V398.9z"></path><path d="M400,413.5c2.8,2.9,4.3,7.1,4.3,12.4v23.1h-9.9v-21.7c0-3.1-0.7-5.5-2.3-7.2 c-1.5-1.6-3.7-2.5-6.4-2.5c-2.7,0-4.9,0.8-6.5,2.5c-1.5,1.6-2.3,4.0-2.3,7.2v21.7h-9.9v-39.3h9.9v4.9 c1.3-1.7,3.0-3.0,5.0-4.0c2.0-0.9,4.3-1.4,6.7-1.4C393.3,409.0,397.1,410.5,400,413.5z"></path></g></svg></a><span>·</span><a href="https://apps.quiron3d.com">Más apps</a></footer>
@@ -620,14 +631,17 @@ dialog.sheet{border-radius:24px 0 0 24px}
       <h3>Entregas</h3>
       <div class="grid" id="tg-deliv"></div>
       <label class="swl"><input type="checkbox" class="chk" id="t-calOn"> Agendar las entregas en mi Google Calendar (con Google conectado)</label>
-      <p class="hint">La fecha sugerida reparte las horas de impresión del pedido en tus horas por día, suma el margen y no cuenta domingos. Con Calendar activado, cada pedido crea un evento de día completo con recordatorio el día anterior.</p>
+      <p class="hint">La fecha sugerida suma primero las horas de los pedidos confirmados y en producción, después las del pedido nuevo, las reparte en tus horas por día, suma el margen y no cuenta domingos. Mientras no la cambies a mano, se actualiza sola al cambiar las piezas. Con Calendar activado, cada pedido crea un evento de día completo con recordatorio el día anterior.</p>
     </div>
     <div class="dsec">
       <h3>Mensajes y presupuestos</h3>
       <div class="grid">
         <div class="f"><label for="t-bizName">Nombre del negocio</label><div class="box"><input id="t-bizName" type="text"></div></div>
         <div class="f"><label for="t-bizContact">Tu contacto (pie del presupuesto)</label><div class="box"><input id="t-bizContact" type="text" placeholder="@quiron.net · WhatsApp"></div></div>
+        <div class="f wide"><label for="t-payInfo">Cómo te pagan</label><div class="box"><input id="t-payInfo" type="text" placeholder="Transferencia o Mercado Pago (alias: …)"></div></div>
       </div>
+      <div class="grid" id="tg-msg"></div>
+      <p class="hint">La seña y la validez aparecen en el presupuesto y en el mensaje. Dejá la seña en 0 para no pedirla.</p>
     </div>
     <div class="dsec">
       <h3>Copia de seguridad</h3>
@@ -661,9 +675,14 @@ dialog.sheet{border-radius:24px 0 0 24px}
 
 <!-- Mensaje / presupuesto -->
 <dialog class="modal wide" id="msgDlg" aria-labelledby="msg-title">
-  <div class="dhd"><h2 id="msg-title">Presupuesto para el cliente</h2><button type="button" class="ib" data-close aria-label="Cerrar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dhd"><h2 id="msg-title">Mensaje para el cliente</h2><button type="button" class="ib" data-close aria-label="Cerrar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="dbd">
-    <div class="dsec">
+    <div class="seg" id="msgKind" role="group" aria-label="Tipo de mensaje">
+      <button type="button" data-k="presu" aria-pressed="true">Presupuesto</button>
+      <button type="button" data-k="listo" aria-pressed="false">Pedido listo</button>
+      <button type="button" data-k="gracias" aria-pressed="false">Agradecimiento</button>
+    </div>
+    <div class="dsec" id="budgetSec">
       <div class="lbl">Imagen del presupuesto</div>
       <img id="budgetImg" class="budget" alt="Generando presupuesto…">
       <div class="dfoot" style="justify-content:flex-start"><button type="button" class="btn" id="budgetDl">Descargar imagen</button><button type="button" class="btn" id="msgDl">Descargar fotos de las piezas</button></div>
@@ -671,6 +690,16 @@ dialog.sheet{border-radius:24px 0 0 24px}
     <div class="f"><label for="msgText">Mensaje (podés editarlo)</label><textarea id="msgText" class="ta" style="min-height:200px"></textarea></div>
     <p class="hint" id="msgHint"></p>
     <div class="dfoot"><button type="button" class="btn" id="msgCopy">Copiar mensaje</button><a class="btn primary" id="msgWa" href="#" target="_blank" rel="noopener">Abrir WhatsApp</a></div>
+  </div>
+</dialog>
+
+<!-- Catálogo -->
+<dialog class="modal wide" id="catDlg" aria-labelledby="cat-title">
+  <div class="dhd"><h2 id="cat-title">Catálogo para compartir</h2><button type="button" class="ib" data-close aria-label="Cerrar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dbd">
+    <p class="hint" id="catHint"></p>
+    <img id="catImg" class="budget" alt="Generando catálogo…">
+    <div class="dfoot"><button type="button" class="btn primary" id="catDl">Descargar imagen</button></div>
   </div>
 </dialog>
 
@@ -697,12 +726,13 @@ var JSZIP_URL='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
 var STATUSES=['Presupuesto','Confirmado','En producción','Listo','Entregado','Cancelado'];
 var T_DEFAULT={kwh:'150',laborRate:'8000',failPct:'10',marginPct:'100',feePct:'0',
   roundTo:'100',minPrice:'0',d1q:'0',d1p:'0',d2q:'0',d2p:'0',hoursPerDay:'10',bufferDays:'2',calOn:'1',
-  infill:'20',shell:'30',bizName:'Quirón 3D',bizContact:''};
+  infill:'20',shell:'30',gph:'12',bizName:'Quirón 3D',bizContact:'',depositPct:'50',validDays:'7',payInfo:''};
 var T_FIELDS={
   'tg-energy':[['kwh','Precio de la luz','$/kWh']],
   'tg-work':[['laborRate','Tu hora de trabajo','$/h'],['failPct','Margen de fallo','%'],['marginPct','Ganancia por defecto','%'],['feePct','Comisión de cobro','%']],
   'tg-min':[['minPrice','Precio mínimo por pieza','$']],
-  'tg-deliv':[['hoursPerDay','Horas de impresión por día','h'],['bufferDays','Días de margen','d']]
+  'tg-deliv':[['hoursPerDay','Horas de impresión por día','h'],['bufferDays','Días de margen','d']],
+  'tg-msg':[['depositPct','Seña para confirmar','%'],['validDays','Presupuesto válido por','días']]
 };
 var MAT_DEFAULT=[{id:'pla',name:'PLA',kgPrice:'25000',density:'1.24'},{id:'petg',name:'PETG',kgPrice:'',density:'1.27'},{id:'tpu',name:'TPU',kgPrice:'',density:'1.21'},{id:'abs',name:'ABS',kgPrice:'',density:'1.04'}];
 var PRN_DEFAULT=[{id:'p1',name:'Mi impresora',watts:'150',printerCost:'800000',lifeHours:'5000'}];
@@ -843,6 +873,8 @@ function renderResult(){
   if(c.pp>1)ph.textContent='Placa de '+c.pp+' piezas: cada una lleva '+dec(c.grams,1)+' g y '+fmtTime(c.hours)+' de impresión. Cargá el tiempo y el peso de la placa entera.';
   var mw=$('matWarn');
   if(m&&!num(m.kgPrice)){mw.hidden=false;mw.textContent='El material «'+m.name+'» no tiene precio cargado. ';var b=el('button',{type:'button',class:'linkbtn',text:'Cargarlo en Mi taller'});b.onclick=openTaller;mw.appendChild(b);}else mw.hidden=true;
+  var sw=$('staleWarn'),age=m&&num(m.kgPrice)&&m.priceAt?daysSince(m.priceAt):0;sw.hidden=!(age>=30);
+  if(!sw.hidden){sw.textContent='El precio del '+m.name+' lo cargaste hace '+age+' días. ¿Sigue igual? ';var sb1=el('button',{type:'button',class:'linkbtn',text:'Revisar en Mi taller'});sb1.onclick=openTaller;var sb2=el('button',{type:'button',class:'linkbtn',text:'Sí, sigue igual'});sb2.onclick=function(){m.priceAt=today();saveListSoon('mats');renderResult();};sw.appendChild(sb1);sw.appendChild(document.createTextNode(' · '));sw.appendChild(sb2);}
   var rw=$('resMatWarn');rw.hidden=!(m&&!num(m.kgPrice)&&num(f.grams));
   if(!rw.hidden){rw.textContent='Falta el precio del '+m.name+': el filamento está contando $ 0. ';var rb=el('button',{type:'button',class:'linkbtn',text:'Cargar precio'});rb.onclick=openTaller;rw.appendChild(rb);}
   var parts=[['Filamento',c.material],['Energía',c.energy],['Amortización',c.amort],['Mano de obra',c.labor],['Insumos extra',c.extras]];
@@ -879,9 +911,11 @@ function estimateGrams(){
   var s=Math.min(100,num(state.t.shell))/100,i=Math.min(100,num(state.t.infill))/100;
   return meshStats.volume*num(m?m.density:1.24)*(s+(1-s)*i);
 }
-function renderEstimate(){var g=estimateGrams();$('estG').textContent=g?Math.round(g).toLocaleString('es-AR')+' g':'—';}
-$('useEst').addEventListener('click',function(){var g=estimateGrams();if(!g)return;state.q.grams=String(Math.round(g));fillQuote();renderResult();toast('Peso actualizado a '+Math.round(g)+' g');});
-[['w-infill','infill'],['w-shell','shell']].forEach(function(p){$(p[0]).addEventListener('input',function(){state.t[p[1]]=$(p[0]).value;renderEstimate();saveTallerSoon();});});
+function estimateHours(g){var v=num(state.t.gph)||12;return g?g/v:0;}
+function renderEstimate(){var g=estimateGrams();$('estG').textContent=g?Math.round(g).toLocaleString('es-AR')+' g':'—';$('estT').textContent=g?fmtTime(estimateHours(g)):'—';}
+function applyEstTime(g){var tm=Math.max(1,Math.round(estimateHours(g)*60));state.q.hours=String(Math.floor(tm/60));state.q.minutes=String(tm%60);}
+$('useEst').addEventListener('click',function(){var g=estimateGrams();if(!g)return;state.q.grams=String(Math.round(g));applyEstTime(g);fillQuote();renderResult();toast('Peso y tiempo actualizados: '+Math.round(g)+' g · '+fmtTime(estimateHours(g)));});
+[['w-infill','infill'],['w-shell','shell'],['w-gph','gph']].forEach(function(p){$(p[0]).addEventListener('input',function(){state.t[p[1]]=$(p[0]).value;renderEstimate();saveTallerSoon();});});
 function renderPending(){
   var ul=$('pending');ul.innerHTML='';
   pending.forEach(function(p){
@@ -901,9 +935,9 @@ function setMesh(m,name){
   [['Archivo',name],['Medidas',m.dims.map(function(d){return dec(d,1);}).join(' × ')+' mm'],['Volumen',dec(m.volume,1)+' cm³']].forEach(function(r){
     kv.appendChild(el('dt',{text:r[0]}));kv.appendChild(el('dd',{text:r[1],title:r[1]}));});
   $('estBox').hidden=!!slice;
-  $('w-infill').value=state.t.infill;$('w-shell').value=state.t.shell;
+  $('w-infill').value=state.t.infill;$('w-shell').value=state.t.shell;$('w-gph').value=state.t.gph;
   renderEstimate();
-  if(!slice){var g=estimateGrams();if(g){state.q.grams=String(Math.round(g));fillQuote();renderResult();toast('Peso estimado desde el modelo: '+Math.round(g)+' g');}}
+  if(!slice){var g=estimateGrams();if(g){state.q.grams=String(Math.round(g));if(!num(state.q.hours)&&!num(state.q.minutes))applyEstTime(g);fillQuote();renderResult();toast('Estimado desde el modelo: '+Math.round(g)+' g · '+fmtTime(estimateHours(g)));}}
   showModel(m.positions);
 }
 function setSlice(r,fname){
@@ -1135,7 +1169,7 @@ function attLinks(atts){
 function renderList(){
   var q=state.query.trim().toLowerCase();
   var vis=state.list.filter(function(it){return !q||(it.name+' '+(it.material||'')).toLowerCase().indexOf(q)!==-1;});
-  $('empty').hidden=state.list.length>0;$('tw').hidden=state.list.length===0;$('repriceBtn').hidden=!state.list.length||!canWrite;
+  $('empty').hidden=state.list.length>0;$('tw').hidden=state.list.length===0;$('repriceBtn').hidden=!state.list.length||!canWrite;$('catBtn').hidden=!state.list.length;
   $('noMatch').hidden=!(state.list.length&&!vis.length);$('noMatch').textContent='Ninguna pieza coincide con «'+state.query+'».';
   var tb=$('tbody');tb.innerHTML='';
   vis.forEach(function(it){
@@ -1290,8 +1324,9 @@ function renderSelCount(){
   $('mkOrder').disabled=!n||!canWrite;$('mkOrder').textContent=n?'Crear pedido ('+n+')':'Crear pedido';
   $('oAddSel').disabled=!n;$('oAddSel').textContent=n?'Agregar las marcadas en la lista ('+n+')':'Agregar las marcadas en la lista';
 }
-function itemFromQuote(it){var c=calc(it.form);return {quoteId:it.id,name:it.name,material:it.material||'',priceUnit:Math.round(c.price),costUnit:Math.round(c.cost),hoursUnit:Math.round(c.hours*1000)/1000,qty:1,discPct:0};}
+function itemFromQuote(it){var c=calc(it.form);return {quoteId:it.id,name:it.name,material:it.material||'',priceUnit:Math.round(c.price),costUnit:Math.round(c.cost),hoursUnit:Math.round(c.hours*1000)/1000,gramsUnit:Math.round(c.grams*10)/10,qty:1,discPct:0};}
 function iQty(i){return Math.max(1,Math.round(num(i.qty))||1);}
+function iGramsU(i){var g=num(i.gramsUnit);if(!g){var q=state.list.find(function(x){return x.id===i.quoteId;});if(q)g=Math.round(calc(q.form).grams*10)/10;}return g;}
 function iLine(i){return num(i.priceUnit)*iQty(i)*(1-num(i.discPct)/100);}
 function iCostU(i){var c=num(i.costUnit);if(!c){var q=state.list.find(function(x){return x.id===i.quoteId;});if(q)c=calc(q.form).cost;}return c;}
 function payments(o){var p=Array.isArray(o.payments)?o.payments.slice():[];if(!p.length&&num(o.deposit))p.push({date:(o.createdAt||'').slice(0,10),amount:num(o.deposit),note:'Seña'});return p;}
@@ -1300,8 +1335,9 @@ function oTotals(o){
   var ship=num(o.shipping),total=Math.round(it)+ship,paid=payments(o).reduce(function(a,p){return a+num(p.amount);},0);
   return {items:Math.round(it),ship:ship,total:total,hours:h,paid:paid,saldo:Math.max(0,total-paid),cost:cost,units:units};
 }
-function suggestDue(hours){
-  var hpd=num(state.t.hoursPerDay)||10,days=Math.ceil(hours/hpd)+Math.round(num(state.t.bufferDays));
+function queueHours(exceptId){var h=0;state.orders.forEach(function(o){if(o.id!==exceptId&&(o.status==='Confirmado'||o.status==='En producción'))h+=oTotals(o).hours;});return h;}
+function suggestDue(hours,exceptId){
+  var hpd=num(state.t.hoursPerDay)||10,days=Math.ceil((hours+queueHours(exceptId))/hpd)+Math.round(num(state.t.bufferDays));
   var d=new Date();d.setHours(0,0,0,0);
   while(days>0){d.setDate(d.getDate()+1);if(d.getDay()!==0)days--;}
   return iso(d);
@@ -1319,7 +1355,7 @@ function openOrder(o,items){
   else{
     oDraft={client:'',contact:'',status:'Presupuesto',shipping:'',payments:[],notes:'',items:items||selectedQuotes().map(itemFromQuote),due:''};
     oDraft.items.forEach(function(i){i.discPct=discFor(iQty(i));});
-    oDraft.due=suggestDue(oTotals(oDraft).hours);
+    oDraft.due=suggestDue(oTotals(oDraft).hours);oDraft.dueAuto=true;
   }
   $('ofTitle').textContent=o?'Editar pedido de '+o.client:'Nuevo pedido';
   $('o-client').value=oDraft.client||'';$('o-contact').value=oDraft.contact||'';$('o-due').value=oDraft.due||'';
@@ -1360,12 +1396,15 @@ function renderPays(){
 }
 $('o-addPay').onclick=function(){if(!oDraft)return;var t=oTotals(oDraft);oDraft.payments.push({date:today(),amount:t.saldo?String(Math.round(t.saldo)):'',note:oDraft.payments.length?'':'Seña'});renderPays();renderOrderTotals();var ins=$('o-pays').querySelectorAll('.payrow:last-child input');if(ins[0])ins[0].focus();};
 function renderOrderTotals(){
-  var t=oTotals(oDraft),s=suggestDue(t.hours);
+  var t=oTotals(oDraft),qh=queueHours(oDraft.id),s=suggestDue(t.hours,oDraft.id);
   $('o-total').textContent=money(t.total);$('o-paid').textContent=money(t.paid);$('o-saldo').textContent=money(t.saldo);
+  if(oDraft.dueAuto&&oDraft.due!==s){oDraft.due=s;$('o-due').value=s;}
   var box=$('o-sugg');box.innerHTML='';
-  box.appendChild(el('span',null,['Impresión total ',el('b',{class:'mono',text:fmtTime(t.hours)}),' · entrega sugerida ',el('b',{text:fmtDate(s)})]));
-  $('o-useSugg').onclick=function(){oDraft.due=s;$('o-due').value=s;};
+  box.appendChild(el('span',null,['Impresión ',el('b',{class:'mono',text:fmtTime(t.hours)}),qh>0.05?' + '+fmtTime(qh)+' en cola':'',' · entrega sugerida ',el('b',{text:fmtDate(s)}),oDraft.dueAuto?el('span',{class:'hint',text:' (se actualiza sola)'}):null]));
+  $('o-useSugg').hidden=!!oDraft.dueAuto&&oDraft.due===s;
+  $('o-useSugg').onclick=function(){oDraft.due=s;oDraft.dueAuto=true;$('o-due').value=s;renderOrderTotals();};
 }
+$('o-due').addEventListener('input',function(){if(oDraft){oDraft.dueAuto=false;renderOrderTotals();}});
 [['o-client','client'],['o-contact','contact'],['o-due','due'],['o-status','status'],['o-ship','shipping'],['o-notes','notes']].forEach(function(p){
   $(p[0]).addEventListener('input',function(){if(!oDraft)return;oDraft[p[1]]=$(p[0]).value;if(p[1]==='shipping')renderOrderTotals();if(p[1]==='client')$('o-err').hidden=true;});
 });
@@ -1385,7 +1424,7 @@ $('oAddSel').onclick=function(){
 function orderBody(d){
   var b={client:String(d.client||'').trim(),contact:d.contact||'',due:d.due||'',status:d.status||'Presupuesto',shipping:String(d.shipping||''),notes:d.notes||'',
     payments:payments(d).filter(function(p){return num(p.amount);}).map(function(p){return {date:p.date||today(),amount:num(p.amount),note:p.note||''};}),
-    items:(d.items||[]).map(function(i){return {quoteId:i.quoteId||null,name:i.name,material:i.material||'',priceUnit:num(i.priceUnit),costUnit:Math.round(iCostU(i)),hoursUnit:num(i.hoursUnit),qty:iQty(i),discPct:num(i.discPct)};}),
+    items:(d.items||[]).map(function(i){return {quoteId:i.quoteId||null,name:i.name,material:i.material||'',priceUnit:num(i.priceUnit),costUnit:Math.round(iCostU(i)),hoursUnit:num(i.hoursUnit),gramsUnit:iGramsU(i),qty:iQty(i),discPct:num(i.discPct)};}),
     feePct:d.feePct!=null?num(d.feePct):num(state.t.feePct),
     calEventId:d.calEventId||null,deliveredAt:d.status==='Entregado'?(d.deliveredAt||today()):null,
     createdAt:d.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
@@ -1468,7 +1507,7 @@ function renderOrders(){
     var cl=el('button',{type:'button',class:'cl',text:o.client,title:'Ver todos los pedidos de '+o.client});
     cl.onclick=function(){state.oquery=o.client;$('oq').value=o.client;setFilter('all');};
     var left=el('div',{class:'l'});
-    var mb=txtBtn('Presupuesto','msg');mb.onclick=function(){openMsg(o);};left.appendChild(mb);
+    var mb=txtBtn('Mensaje','msg');mb.onclick=function(){openMsg(o);};left.appendChild(mb);
     if(canWrite&&t.saldo>0&&o.status!=='Cancelado'){var pb=txtBtn('Pago','pay');pb.onclick=function(){payDialog(o);};left.appendChild(pb);}
     var right=el('div',{style:'display:flex;gap:2px'});
     if(canWrite){
@@ -1511,55 +1550,131 @@ $('toOrderBtn').onclick=function(){
 };
 
 // --- presupuesto ---
-function buildMsg(o){
-  var t=oTotals(o),biz=(state.t.bizName||'').trim();
-  var lines=['¡Hola '+o.client.split(' ')[0]+'! Te paso el detalle de tu pedido'+(biz?' en '+biz:'')+':',''];
-  o.items.forEach(function(i){lines.push('• '+iQty(i)+'× '+i.name+(i.material?' ('+i.material+')':'')+' — '+money(iLine(i))+(num(i.discPct)?' (con '+num(i.discPct)+'% de descuento)':''));});
-  if(t.ship)lines.push('• Envío / embalaje — '+money(t.ship));
-  lines.push('','*Total: '+money(t.total)+'*');
-  if(t.paid)lines.push('Ya abonado: '+money(t.paid),'Saldo: '+money(t.saldo));
-  if(o.due)lines.push('','Entrega estimada: '+fmtDate(o.due,true)+'.');
-  lines.push('','¡Gracias!');
+function validUntil(o){var v=Math.round(num(state.t.validDays));if(!v)return '';var d=parseIso(String(o.createdAt||today()).slice(0,10))||new Date();d=new Date(d.getTime());d.setDate(d.getDate()+v);return iso(d);}
+function depositOf(o){var t=oTotals(o),pct=num(state.t.depositPct);return (o.status||'Presupuesto')==='Presupuesto'&&pct>0&&!t.paid?Math.round(t.total*pct/100):0;}
+function msgKindFor(o){return o.status==='Listo'?'listo':o.status==='Entregado'?'gracias':'presu';}
+function buildMsg(o,kind){
+  kind=kind||'presu';
+  var t=oTotals(o),biz=(state.t.bizName||'').trim(),name=(o.client||'').split(' ')[0],pay=(state.t.payInfo||'').trim(),lines;
+  function items(){o.items.forEach(function(i){lines.push('• '+iQty(i)+'× '+i.name+(i.material?' ('+i.material+')':'')+' — '+money(iLine(i))+(num(i.discPct)?' (con '+num(i.discPct)+'% de descuento)':''));});if(t.ship)lines.push('• Envío / embalaje — '+money(t.ship));}
+  if(kind==='listo'){
+    lines=['¡Hola '+name+'! Tu pedido'+(biz?' de '+biz:'')+' ya está listo:',''];items();
+    lines.push('');
+    if(t.saldo>0){lines.push('*Saldo a pagar: '+money(t.saldo)+'*');if(pay)lines.push('Formas de pago: '+pay);}else lines.push('Ya está todo pago.');
+    lines.push('','¿Coordinamos la entrega?');
+  }else if(kind==='gracias'){
+    lines=['¡Hola '+name+'! Gracias por tu compra'+(biz?' en '+biz:'')+'. Ojalá te encante.','',
+      'Si querés, mandanos una foto o etiquetanos'+(state.t.bizContact?' ('+state.t.bizContact+')':'')+': nos ayuda muchísimo.','','¡Hasta la próxima!'];
+  }else{
+    lines=['¡Hola '+name+'! Te paso el detalle de tu pedido'+(biz?' en '+biz:'')+':',''];items();
+    lines.push('','*Total: '+money(t.total)+'*');
+    if(t.paid)lines.push('Ya abonado: '+money(t.paid),'Saldo: '+money(t.saldo));
+    var dep=depositOf(o);if(dep)lines.push('Para confirmarlo, la seña es de '+money(dep)+' ('+num(state.t.depositPct)+'%).');
+    if(o.due)lines.push('','Entrega estimada: '+fmtDate(o.due,true)+'.');
+    var vu=(o.status||'Presupuesto')==='Presupuesto'?validUntil(o):'';if(vu)lines.push('Este presupuesto vale hasta el '+fmtDate(vu,true)+'.');
+    if(pay)lines.push('Formas de pago: '+pay+'.');
+    lines.push('','¡Gracias!');
+  }
   return lines.join('\n');
 }
 function loadImg(src){return new Promise(function(res){if(!src)return res(null);var i=new Image();i.onload=function(){res(i);};i.onerror=function(){res(null);};i.src=src;});}
 function rr(x,X,Y,W,H,R){x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+W,Y,X+W,Y+H,R);x.arcTo(X+W,Y+H,X,Y+H,R);x.arcTo(X,Y+H,X,Y,R);x.arcTo(X,Y,X+W,Y,R);x.closePath();}
 function fit(x,s,w){if(x.measureText(s).width<=w)return s;while(s.length>1&&x.measureText(s+'…').width>w)s=s.slice(0,-1);return s+'…';}
-async function drawBudget(o){
-  try{if(document.fonts&&document.fonts.load){await Promise.all([document.fonts.load('700 40px "IBM Plex Sans"'),document.fonts.load('400 24px "IBM Plex Sans"'),document.fonts.load('600 28px "IBM Plex Mono"')]);}}catch(e){}
-  var t=oTotals(o),imgs=await Promise.all(o.items.map(function(i){return loadImg(qThumb(i.quoteId));}));
-  var W=1080,P=64,ROW=132,head=220,itemsH=o.items.length*ROW+(t.ship?70:0),totH=150+(t.paid?96:0)+(o.due?84:0),H=head+56+itemsH+totH+130;
-  var c=document.createElement('canvas');c.width=W;c.height=H;var x=c.getContext('2d');
-  var SANS='"IBM Plex Sans",system-ui,sans-serif',MONO='"IBM Plex Mono",ui-monospace,monospace';
-  x.fillStyle='#FFFFFF';x.fillRect(0,0,W,H);
-  x.fillStyle='#15171C';x.fillRect(0,0,W,head);
-  x.fillStyle='#F97316';x.font='600 22px '+MONO;x.fillText('PRESUPUESTO',P,74);
-  x.fillStyle='#FFFFFF';x.font='700 52px '+SANS;x.fillText(fit(x,state.t.bizName||'Quirón 3D',W-2*P),P,138);
-  x.fillStyle='#B7BCC6';x.font='400 26px '+SANS;x.fillText(fit(x,'Para '+o.client+' · '+new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}),W-2*P),P,184);
-  var y=head+40;
-  o.items.forEach(function(i,k){
-    var im=imgs[k],tw=128,th=96,ty=y+(ROW-th)/2-10;
-    x.save();rr(x,P,ty,tw,th,12);x.clip();x.fillStyle='#EEF0F3';x.fillRect(P,ty,tw,th);
-    if(im){var s=Math.max(tw/im.width,th/im.height),w=im.width*s,h=im.height*s;x.drawImage(im,P+(tw-w)/2,ty+(th-h)/2,w,h);}
-    x.restore();
-    var tx=P+tw+28,right=W-P;
-    x.fillStyle='#15171C';x.font='600 30px '+SANS;x.fillText(fit(x,i.name,right-tx-240),tx,ty+38);
-    x.fillStyle='#5B616E';x.font='400 24px '+SANS;
-    x.fillText(fit(x,iQty(i)+' × '+money(i.priceUnit)+(i.material?' · '+i.material:'')+(num(i.discPct)?' · −'+num(i.discPct)+'%':''),right-tx-240),tx,ty+78);
-    x.fillStyle='#15171C';x.font='600 30px '+MONO;x.textAlign='right';x.fillText(money(iLine(i)),right,ty+56);x.textAlign='left';
-    y+=ROW;x.fillStyle='#E2E4E9';x.fillRect(P,y-8,W-2*P,2);
-  });
-  if(t.ship){x.fillStyle='#3A3F4A';x.font='400 26px '+SANS;x.fillText('Envío / embalaje',P,y+38);x.font='600 28px '+MONO;x.textAlign='right';x.fillText(money(t.ship),W-P,y+38);x.textAlign='left';y+=70;}
-  y+=20;rr(x,P,y,W-2*P,120,16);x.fillStyle='#FFF1E8';x.fill();
-  x.fillStyle='#9A3412';x.font='600 28px '+SANS;x.fillText('Total',P+32,y+72);
-  x.font='700 52px '+MONO;x.textAlign='right';x.fillText(money(t.total),W-P-32,y+80);x.textAlign='left';y+=150;
-  if(t.paid){x.fillStyle='#3A3F4A';x.font='400 26px '+SANS;x.fillText('Abonado',P,y+10);x.fillText('Saldo',P,y+56);
-    x.font='600 28px '+MONO;x.textAlign='right';x.fillText(money(t.paid),W-P,y+10);x.fillText(money(t.saldo),W-P,y+56);x.textAlign='left';y+=96;}
-  if(o.due){x.fillStyle='#15171C';x.font='600 28px '+SANS;var dt='Entrega estimada: '+fmtDate(o.due,true);x.fillText(fit(x,dt,W-2*P),P,y+30);y+=84;}
-  x.fillStyle='#E2E4E9';x.fillRect(0,H-90,W,1);
-  x.fillStyle='#5B616E';x.font='400 24px '+SANS;x.fillText(fit(x,'¡Gracias por tu pedido!'+(state.t.bizContact?' · '+state.t.bizContact:''),W-2*P),P,H-38);
-  return c.toDataURL('image/png');
+function brandImg(color){
+  var sv=document.querySelector('.qfoot .qbrand-svg');if(!sv)return Promise.resolve(null);
+  var src=sv.outerHTML.replace(/currentColor/g,color).replace('<svg','<svg width="692" height="283"');
+  return loadImg('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src));
 }
+var BR={navy:'#10213A',ink:'#172C47',muted:'#5A6C86',line:'#DCE3ED',soft:'#EEF2F8',sun:'#F5C451',sunSoft:'#FFF4D6',sunInk:'#7A4E00'};
+function drawPlaceholder(x,X,Y,W,H){
+  x.save();rr(x,X,Y,W,H,14);x.fillStyle=BR.soft;x.fill();
+  var cx=X+W/2,cy=Y+H/2,r=Math.min(W,H)*0.26;x.strokeStyle='#9AACC4';x.lineWidth=3;x.lineJoin='round';
+  x.beginPath();x.moveTo(cx,cy-r);x.lineTo(cx+r,cy-r/2);x.lineTo(cx+r,cy+r/2);x.lineTo(cx,cy+r);x.lineTo(cx-r,cy+r/2);x.lineTo(cx-r,cy-r/2);x.closePath();x.stroke();
+  x.beginPath();x.moveTo(cx-r,cy-r/2);x.lineTo(cx,cy);x.lineTo(cx+r,cy-r/2);x.moveTo(cx,cy);x.lineTo(cx,cy+r);x.stroke();x.restore();
+}
+function drawCover(x,im,X,Y,W,H,R){x.save();rr(x,X,Y,W,H,R);x.clip();x.fillStyle=BR.soft;x.fillRect(X,Y,W,H);var s=Math.max(W/im.width,H/im.height),w=im.width*s,h=im.height*s;x.drawImage(im,X+(W-w)/2,Y+(H-h)/2,w,h);x.restore();}
+async function fontsReady(){try{if(document.fonts&&document.fonts.load){await Promise.all([document.fonts.load('700 40px "IBM Plex Sans"'),document.fonts.load('400 24px "IBM Plex Sans"'),document.fonts.load('600 28px "IBM Plex Mono"')]);}}catch(e){}}
+function drawHead(x,W,P,logo,label,title,sub){
+  x.fillStyle=BR.navy;x.fillRect(0,0,W,236);
+  x.fillStyle=BR.sun;x.fillRect(0,236,W,6);
+  var SANS='"IBM Plex Sans",system-ui,sans-serif',MONO='"IBM Plex Mono",ui-monospace,monospace';
+  if(logo){var lh=46;x.drawImage(logo,P,44,lh*692/283,lh);}
+  x.fillStyle=BR.sun;x.font='600 22px '+MONO;x.textAlign='right';x.fillText(label,W-P,76);x.textAlign='left';
+  x.fillStyle='#FFFFFF';x.font='700 50px '+SANS;x.fillText(fit(x,title,W-2*P),P,162);
+  x.fillStyle='#AFC5E6';x.font='400 26px '+SANS;x.fillText(fit(x,sub,W-2*P),P,206);
+}
+function finishCanvas(c,h){var o=document.createElement('canvas');o.width=c.width;o.height=Math.ceil(h);o.getContext('2d').drawImage(c,0,0);return o.toDataURL('image/png');}
+async function drawBudget(o){
+  await fontsReady();
+  var t=oTotals(o),imgs=await Promise.all(o.items.map(function(i){return loadImg(qThumb(i.quoteId));})),logo=await brandImg('#FFFFFF');
+  var W=1080,P=64,ROW=132,SANS='"IBM Plex Sans",system-ui,sans-serif',MONO='"IBM Plex Mono",ui-monospace,monospace';
+  var c=document.createElement('canvas');c.width=W;c.height=300+o.items.length*ROW+900;var x=c.getContext('2d');
+  x.fillStyle='#FFFFFF';x.fillRect(0,0,W,c.height);
+  drawHead(x,W,P,logo,'PRESUPUESTO',state.t.bizName||'Quirón 3D','Para '+o.client+' · '+new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}));
+  var y=242+36;
+  o.items.forEach(function(i,k){
+    var tw=128,th=96,ty=y+(ROW-th)/2-10;
+    if(imgs[k])drawCover(x,imgs[k],P,ty,tw,th,12);else drawPlaceholder(x,P,ty,tw,th);
+    var tx=P+tw+28,right=W-P;
+    x.fillStyle=BR.ink;x.font='600 30px '+SANS;x.fillText(fit(x,i.name,right-tx-240),tx,ty+38);
+    x.fillStyle=BR.muted;x.font='400 24px '+SANS;
+    x.fillText(fit(x,iQty(i)+' × '+money(i.priceUnit)+(i.material?' · '+i.material:'')+(num(i.discPct)?' · −'+num(i.discPct)+'%':''),right-tx-240),tx,ty+78);
+    x.fillStyle=BR.ink;x.font='600 30px '+MONO;x.textAlign='right';x.fillText(money(iLine(i)),right,ty+56);x.textAlign='left';
+    y+=ROW;x.fillStyle=BR.line;x.fillRect(P,y-8,W-2*P,2);
+  });
+  function row(label,val,bold){x.fillStyle=bold?BR.ink:'#33496A';x.font=(bold?'600 ':'400 ')+'26px '+SANS;x.fillText(label,P,y+34);x.font='600 28px '+MONO;x.textAlign='right';x.fillText(val,W-P,y+34);x.textAlign='left';y+=54;}
+  if(t.ship){y+=6;row('Envío / embalaje',money(t.ship));}
+  y+=24;rr(x,P,y,W-2*P,120,18);x.fillStyle=BR.sunSoft;x.fill();
+  x.fillStyle=BR.sunInk;x.font='600 28px '+SANS;x.fillText('Total',P+32,y+72);
+  x.fillStyle=BR.navy;x.font='700 52px '+MONO;x.textAlign='right';x.fillText(money(t.total),W-P-32,y+80);x.textAlign='left';y+=144;
+  if(t.paid){row('Abonado',money(t.paid));row('Saldo',money(t.saldo),true);}
+  var dep=depositOf(o);if(dep)row('Seña para confirmar ('+num(state.t.depositPct)+'%)',money(dep),true);
+  y+=10;
+  function note(txt,bold){x.fillStyle=bold?BR.ink:'#33496A';x.font=(bold?'600 ':'400 ')+'26px '+SANS;x.fillText(fit(x,txt,W-2*P),P,y+30);y+=46;}
+  if(o.due)note('Entrega estimada: '+fmtDate(o.due,true),true);
+  var vu=(o.status||'Presupuesto')==='Presupuesto'?validUntil(o):'';if(vu)note('Válido hasta el '+fmtDate(vu,true));
+  if((state.t.payInfo||'').trim())note('Formas de pago: '+state.t.payInfo.trim());
+  y+=40;x.fillStyle=BR.line;x.fillRect(0,y,W,1);
+  x.fillStyle=BR.muted;x.font='400 24px '+SANS;x.fillText(fit(x,'¡Gracias por tu pedido!'+(state.t.bizContact?' · '+state.t.bizContact:''),W-2*P),P,y+54);
+  return finishCanvas(c,y+90);
+}
+async function drawCatalog(items){
+  await fontsReady();
+  var imgs=await Promise.all(items.map(function(it){return loadImg(it.thumb);})),logo=await brandImg('#FFFFFF');
+  var W=1080,P=56,G=28,CW=(W-2*P-G)/2,IH=Math.round(CW*0.72),CH=IH+118,rows=Math.ceil(items.length/2);
+  var SANS='"IBM Plex Sans",system-ui,sans-serif',MONO='"IBM Plex Mono",ui-monospace,monospace';
+  var c=document.createElement('canvas');c.width=W;c.height=242+40+rows*(CH+G)+200;var x=c.getContext('2d');
+  x.fillStyle='#F4F7FB';x.fillRect(0,0,W,c.height);
+  var mes=new Date().toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  drawHead(x,W,P,logo,'LISTA DE PRECIOS',state.t.bizName||'Quirón 3D','Precios por unidad · '+mes);
+  var y0=242+40;
+  items.forEach(function(it,k){
+    var col=k%2,row=Math.floor(k/2),X=P+col*(CW+G),Y=y0+row*(CH+G);
+    x.save();x.shadowColor='rgba(16,33,58,.10)';x.shadowBlur=18;x.shadowOffsetY=6;rr(x,X,Y,CW,CH,22);x.fillStyle='#FFFFFF';x.fill();x.restore();
+    if(imgs[k])drawCover(x,imgs[k],X+12,Y+12,CW-24,IH-12,16);else drawPlaceholder(x,X+12,Y+12,CW-24,IH-12);
+    x.fillStyle=BR.ink;x.font='600 28px '+SANS;x.fillText(fit(x,it.name,CW-40),X+20,Y+IH+46);
+    x.fillStyle=BR.muted;x.font='400 22px '+SANS;x.fillText(fit(x,it.material||'',CW/2),X+20,Y+IH+86);
+    x.fillStyle=BR.navy;x.font='700 32px '+MONO;x.textAlign='right';x.fillText(money(calc(it.form).price),X+CW-20,Y+IH+88);x.textAlign='left';
+  });
+  var y=y0+rows*(CH+G)+10;
+  x.fillStyle=BR.muted;x.font='400 24px '+SANS;
+  var foot=[state.t.bizContact,(state.t.payInfo||'').trim()?'Formas de pago: '+state.t.payInfo.trim():''].filter(Boolean);
+  foot.forEach(function(f){x.fillText(fit(x,f,W-2*P),P,y+30);y+=40;});
+  x.fillStyle='#8193AB';x.font='400 20px '+SANS;x.fillText('Precios sujetos a cambios. Consultá por cantidades.',P,y+30);
+  return finishCanvas(c,y+70);
+}
+var catUrl=null;
+$('catBtn').onclick=async function(){
+  var sel=selectedQuotes(),q=state.query.trim().toLowerCase();
+  var items=sel.length?sel:state.list.filter(function(it){return !q||(it.name+' '+(it.material||'')).toLowerCase().indexOf(q)!==-1;});
+  if(!items.length)return;
+  items=items.slice(0,24);
+  $('catHint').textContent=(sel.length?'Con las '+items.length+' piezas que marcaste.':'Con todas las piezas de la lista'+(q?' que coinciden con la búsqueda':'')+'. Para elegir cuáles, marcalas antes de tocar «Catálogo».')+(state.list.length>24&&!sel.length?' Entran hasta 24.':'');
+  $('catImg').removeAttribute('src');$('catImg').alt='Generando catálogo…';catUrl=null;
+  $('catDlg').showModal();
+  catUrl=await drawCatalog(items);$('catImg').src=catUrl;$('catImg').alt='Catálogo con '+items.length+' piezas y sus precios';
+};
+$('catDl').onclick=function(){if(catUrl)saveDataUrl(catUrl,'catalogo-'+slug(state.t.bizName||'quiron')+'-'+today()+'.png');};
 var msgOrder=null,budgetUrl=null;
 function waHref(){var d=(msgOrder&&msgOrder.contact||'').replace(/\D/g,'');return 'https://wa.me/'+(d.length>=8?d:'')+'?text='+encodeURIComponent($('msgText').value);}
 function slug(s){return (s||'archivo').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'').toLowerCase();}
@@ -1569,11 +1684,18 @@ function saveDataUrl(url,name){
     var a=document.createElement('a');a.href=url;a.download=name;a.click();
   }).catch(function(){toast('No se pudo descargar.');});
 }
-async function openMsg(o){
-  msgOrder=o;$('msgText').value=buildMsg(o);budgetUrl=null;
+function setMsgKind(k){
+  var o=msgOrder;if(!o)return;
+  Array.prototype.forEach.call($('msgKind').querySelectorAll('button'),function(b){b.setAttribute('aria-pressed',String(b.dataset.k===k));});
+  $('msgText').value=buildMsg(o,k);$('msgWa').href=waHref();
+  $('budgetSec').hidden=k!=='presu';
   var d=(o.contact||'').replace(/\D/g,'');
-  $('msgHint').textContent=(d.length>=8?'Se abre el chat con '+o.contact+'. Si no lo encuentra, agregale el código de país al contacto (54 9 …).':'No hay un número en el contacto: WhatsApp te va a pedir que elijas el chat.')+' Adjuntá la imagen del presupuesto en el chat.';
-  $('msgWa').href=waHref();
+  $('msgHint').textContent=(d.length>=8?'Se abre el chat con '+o.contact+'. Si no lo encuentra, agregale el código de país al contacto (54 9 …).':'No hay un número en el contacto: WhatsApp te va a pedir que elijas el chat.')+(k==='presu'?' Adjuntá la imagen del presupuesto en el chat.':'');
+}
+Array.prototype.forEach.call(document.querySelectorAll('#msgKind button'),function(b){b.onclick=function(){setMsgKind(b.dataset.k);};});
+async function openMsg(o){
+  msgOrder=o;budgetUrl=null;
+  setMsgKind(msgKindFor(o));
   var imgs=o.items.filter(function(i){return qThumb(i.quoteId);});
   $('msgDl').hidden=!imgs.length;
   $('msgDl').onclick=function(){imgs.forEach(function(i){saveDataUrl(qThumb(i.quoteId),slug(i.name)+'.jpg');});};
@@ -1601,6 +1723,10 @@ function renderMonth(){
     o.items.forEach(function(i){var k=i.name;pieces[k]=pieces[k]||{u:0,v:0};pieces[k].u+=iQty(i);pieces[k].v+=iLine(i);});
     var ck=(o.client||'').trim()||'Sin nombre';cls[ck]=(cls[ck]||0)+t.total;});
   state.orders.forEach(function(o){if(o.status==='Cancelado')return;payments(o).forEach(function(pp){if((pp.date||'').slice(0,7)===mk)cobr+=num(pp.amount);});});
+  var fil={};os.forEach(function(o){o.items.forEach(function(i){var k=(i.material||'Sin material').trim()||'Sin material';fil[k]=(fil[k]||0)+iGramsU(i)*iQty(i)*(1+num(state.t.failPct)/100);});});
+  var fl=$('mFil');fl.innerHTML='';
+  Object.keys(fil).filter(function(k){return fil[k]>0;}).sort(function(a,b){return fil[b]-fil[a];}).forEach(function(k){var g=fil[k];fl.appendChild(el('li',null,[el('span',{text:k}),el('span',{class:'mono',text:g>=1000?dec(g/1000,2)+' kg':Math.round(g)+' g'})]));});
+  if(!fl.children.length)fl.appendChild(el('li',null,[el('span',{class:'hint',text:'Sin datos este mes'})]));
   var gain=sales-cost-fees;
   var s=$('mStats');s.innerHTML='';
   [['Ventas',money(sales),''],['Costo de producción',money(cost),''],['Comisiones',money(fees),''],['Ganancia',money(gain),gain>0?'good':gain<0?'alert':''],['Cobrado en el mes',money(cobr),''],['Pedidos · piezas',os.length+' · '+units,'']].forEach(function(x){
@@ -1628,7 +1754,7 @@ function buildTaller(){
       g.appendChild(el('div',{class:'f'},[el('label',{for:'t-'+d[0],text:d[1]}),el('div',{class:'box'},[i,el('span',{text:d[2]})])]));
     });
   });
-  ['roundTo','d1q','d1p','d2q','d2p','bizName','bizContact'].forEach(function(k){var i=$('t-'+k);i.addEventListener(i.tagName==='SELECT'?'change':'input',function(){state.t[k]=i.value;onTallerChange();});});
+  ['roundTo','d1q','d1p','d2q','d2p','bizName','bizContact','payInfo'].forEach(function(k){var i=$('t-'+k);i.addEventListener(i.tagName==='SELECT'?'change':'input',function(){state.t[k]=i.value;onTallerChange();});});
   $('t-calOn').addEventListener('change',function(){state.t.calOn=$('t-calOn').checked?'1':'0';refreshAlert();saveTallerSoon();});
 }
 function fillTaller(){
@@ -1642,7 +1768,7 @@ function renderEditRows(tbId,arr,cols,noun,onChange){
   var tb=$(tbId);tb.innerHTML='';
   arr.forEach(function(m){
     var tds=cols.map(function(c){var i=el('input',{type:c[1],step:'any',min:'0',inputmode:c[1]==='number'?'decimal':null,'aria-label':c[2]+' de '+(m.name||noun)});i.value=m[c[0]]||'';
-      i.addEventListener('input',function(){m[c[0]]=i.value;onChange();});return el('td',null,[el('div',{class:'box'},[i])]);});
+      i.addEventListener('input',function(){m[c[0]]=i.value;if(c[0]==='kgPrice')m.priceAt=today();onChange();});return el('td',null,[el('div',{class:'box'},[i])]);});
     var rm=iconBtn('del','Quitar '+(m.name||noun),'del');
     rm.onclick=function(){if(arr.length<=1)return toast(noun==='material'?'Tiene que quedar al menos un material.':'Tiene que quedar al menos una impresora.');
       armConfirm(rm,m.id,'Tocá de nuevo para quitar '+(m.name||'la '+noun),function(){var ix=arr.indexOf(m);if(ix>=0)arr.splice(ix,1);fillTaller();onChange();});};
@@ -1662,7 +1788,18 @@ function saveListSoon(which){clearTimeout(lT[which]);lT[which]=setTimeout(functi
   if(gas)saveCache();if(gas)api('saveConfig',{name:which==='mats'?'materials':'printers',value:arr}).catch(function(){toast('No se pudo guardar en tu Google.');});else saveLocal();},900);}
 
 // ================= backup =================
+var BK_KEY='quiron-cotizador-3d-copia';
+function bkInfo(){try{return JSON.parse(localStorage.getItem(BK_KEY)||'{}');}catch(e){return {};}}
+function bkSet(o){try{localStorage.setItem(BK_KEY,JSON.stringify(Object.assign(bkInfo(),o)));}catch(e){}}
+function renderBkWarn(){
+  var b=bkInfo(),has=state.list.length||state.orders.length,last=b.last?daysSince(b.last):null,snz=b.snooze&&b.snooze>today();
+  var show=!gas&&has&&!snz&&(last==null||last>=30);$('bkWarn').hidden=!show;
+  if(show)$('bkWarnTxt').textContent=last==null?'Tus datos están solo en este navegador. Descargá una copia por las dudas.':'Hace '+last+' días que no descargás una copia de tus datos.';
+}
+$('bkNow').onclick=function(){$('bkDl').click();};
+$('bkLater').onclick=function(){var d=new Date();d.setDate(d.getDate()+7);bkSet({snooze:iso(d)});renderBkWarn();};
 $('bkDl').onclick=function(){
+  bkSet({last:today()});setTimeout(renderBkWarn,0);
   var data={app:'quiron-cotizador-3d',version:3,exportedAt:new Date().toISOString(),taller:state.t,materials:state.mats,printers:state.printers,quotes:state.list,orders:state.orders};
   var name='cotizador-3d-copia-'+today()+'.json',blob=new Blob([JSON.stringify(data)],{type:'application/json'});
   if(downloads)downloads.save({filename:name,data:blob}).catch(function(){});
@@ -1692,13 +1829,15 @@ if(window.IntersectionObserver){
 }
 
 // ================= persistence =================
-function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify({t:state.t,mats:state.mats,printers:state.printers,list:state.list,orders:state.orders}));}catch(e){}}
+function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify({t:state.t,mats:state.mats,printers:state.printers,list:state.list,orders:state.orders}));}catch(e){}try{renderBkWarn();}catch(e){}}
 function loadLocal(){
   try{var d=JSON.parse(localStorage.getItem(LS_KEY)||'null');
     if(d){state.t=Object.assign({},T_DEFAULT,d.t||{});if(Array.isArray(d.mats)&&d.mats.length)state.mats=d.mats;if(Array.isArray(d.printers)&&d.printers.length)state.printers=d.printers;state.list=d.list||[];state.orders=d.orders||[];}}catch(e){}
   renderAll();
 }
-function renderAll(){fillQuote();renderResult();renderList();renderOrders();renderEstimate();}
+function daysSince(d){var x=parseIso(String(d).slice(0,10));if(!x)return 0;var t=new Date();t.setHours(0,0,0,0);return Math.round((t-x)/86400000);}
+function stampPrices(){var ch=false;state.mats.forEach(function(m){if(num(m.kgPrice)&&!m.priceAt){m.priceAt=today();ch=true;}});return ch;}
+function renderAll(){if(stampPrices())saveListSoon('mats');renderBkWarn();fillQuote();renderResult();renderList();renderOrders();renderEstimate();}
 
 buildTaller();renderAll();
 
