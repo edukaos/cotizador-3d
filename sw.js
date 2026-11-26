@@ -1,6 +1,6 @@
 // Cotizador 3D — permite instalar la app y usarla sin internet.
-const CACHE = 'cotizador-3d-v1';
-const BASE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE = 'cotizador-3d-v2';
+const BASE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './css/curso.css', './js/curso.js'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE)).then(() => self.skipWaiting()));
 });
